@@ -11,7 +11,7 @@
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
-		B8A753132DDA70A700469EF4 /* Exceptions for "Tracker" folder in "Tracker" target */ = {
+		B8A754D92DDE089000469EF4 /* Exceptions for "Tracker" folder in "Tracker" target */ = {
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
 			membershipExceptions = (
 				Info.plist,
@@ -24,9 +24,24 @@
 		B8A753032DDA70A600469EF4 /* Tracker */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
 			exceptions = (
-				B8A753132DDA70A700469EF4 /* Exceptions for "Tracker" folder in "Tracker" target */,
+				B8A754D92DDE089000469EF4 /* Exceptions for "Tracker" folder in "Tracker" target */,
 			);
 			path = Tracker;
+			sourceTree = "<group>";
+		};
+		B8A754C82DDDF7EE00469EF4 /* TrackerTypeViewController */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = TrackerTypeViewController;
+			sourceTree = "<group>";
+		};
+		B8A754CB2DDE01D400469EF4 /* Extensions */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = Extensions;
+			sourceTree = "<group>";
+		};
+		B8A754CF2DDE06B500469EF4 /* Fonts */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = Fonts;
 			sourceTree = "<group>";
 		};
 /* End PBXFileSystemSynchronizedRootGroup section */
@@ -45,8 +60,11 @@
 		B8A752F82DDA70A600469EF4 = {
 			isa = PBXGroup;
 			children = (
+				B8A754CF2DDE06B500469EF4 /* Fonts */,
+				B8A754CB2DDE01D400469EF4 /* Extensions */,
 				B8A753022DDA70A600469EF4 /* Products */,
 				B8A753032DDA70A600469EF4 /* Tracker */,
+				B8A754C82DDDF7EE00469EF4 /* TrackerTypeViewController */,
 			);
 			sourceTree = "<group>";
 		};
@@ -75,6 +93,9 @@
 			);
 			fileSystemSynchronizedGroups = (
 				B8A753032DDA70A600469EF4 /* Tracker */,
+				B8A754C82DDDF7EE00469EF4 /* TrackerTypeViewController */,
+				B8A754CB2DDE01D400469EF4 /* Extensions */,
+				B8A754CF2DDE06B500469EF4 /* Fonts */,
 			);
 			name = Tracker;
 			packageProductDependencies = (
@@ -148,6 +169,7 @@
 				DEVELOPMENT_TEAM = TQ873YGCDK;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = Tracker/Info.plist;
+				INFOPLIST_KEY_LSApplicationCategoryType = "";
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchStoryboardName = LaunchScreen;
 				INFOPLIST_KEY_UISupportedInterfaceOrientations = UIInterfaceOrientationPortrait;
@@ -179,6 +201,7 @@
 				DEVELOPMENT_TEAM = TQ873YGCDK;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = Tracker/Info.plist;
+				INFOPLIST_KEY_LSApplicationCategoryType = "";
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchStoryboardName = LaunchScreen;
 				INFOPLIST_KEY_UISupportedInterfaceOrientations = UIInterfaceOrientationPortrait;
