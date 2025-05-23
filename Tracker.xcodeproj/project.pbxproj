@@ -29,11 +29,6 @@
 			path = Tracker;
 			sourceTree = "<group>";
 		};
-		B8A754C82DDDF7EE00469EF4 /* TrackerTypeViewController */ = {
-			isa = PBXFileSystemSynchronizedRootGroup;
-			path = TrackerTypeViewController;
-			sourceTree = "<group>";
-		};
 		B8A754CB2DDE01D400469EF4 /* Extensions */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
 			path = Extensions;
@@ -60,11 +55,10 @@
 		B8A752F82DDA70A600469EF4 = {
 			isa = PBXGroup;
 			children = (
-				B8A754CF2DDE06B500469EF4 /* Fonts */,
 				B8A754CB2DDE01D400469EF4 /* Extensions */,
+				B8A754CF2DDE06B500469EF4 /* Fonts */,
 				B8A753022DDA70A600469EF4 /* Products */,
 				B8A753032DDA70A600469EF4 /* Tracker */,
-				B8A754C82DDDF7EE00469EF4 /* TrackerTypeViewController */,
 			);
 			sourceTree = "<group>";
 		};
@@ -93,7 +87,6 @@
 			);
 			fileSystemSynchronizedGroups = (
 				B8A753032DDA70A600469EF4 /* Tracker */,
-				B8A754C82DDDF7EE00469EF4 /* TrackerTypeViewController */,
 				B8A754CB2DDE01D400469EF4 /* Extensions */,
 				B8A754CF2DDE06B500469EF4 /* Fonts */,
 			);
