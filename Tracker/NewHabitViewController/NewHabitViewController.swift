@@ -164,6 +164,9 @@ final class NewHabitViewController: UIViewController {
     override func viewDidLoad() {
         super.viewDidLoad()
         cancelButton.addTarget(self, action: #selector(didTapCancel), for: .touchUpInside)
+        scheduleButton.addTarget(self, action: #selector(scheduleButtonTapped), for: .touchUpInside)
+        categoryButton.addTarget(self, action: #selector(categoryButtonTapped), for: .touchUpInside)
+        
         view.addSubview(scrollView)
         view.backgroundColor = .ypWhite
         scrollView.translatesAutoresizingMaskIntoConstraints = false
@@ -190,7 +193,7 @@ final class NewHabitViewController: UIViewController {
         contentView.backgroundColor = .ypWhite
         setupLayout()
         nameTextField.delegate = self
-
+        
     }
     
     // MARK: - Layout
@@ -202,7 +205,7 @@ final class NewHabitViewController: UIViewController {
         return spacer
     }
     
-    func makeDivider(inset: CGFloat = 16) -> UIView {
+    private func makeDivider(inset: CGFloat = 16) -> UIView {
         let container = UIView()
         container.translatesAutoresizingMaskIntoConstraints = false
         
@@ -284,8 +287,50 @@ final class NewHabitViewController: UIViewController {
     @objc private func didTapCancel() {
         presentingViewController?.presentingViewController?.dismiss(animated: true)
     }
-
-
+    
+    @objc private func categoryButtonTapped() {
+        UIView.animate(withDuration: 0.1,
+                       animations: {
+            self.categoryButton.transform = CGAffineTransform(scaleX: 0.95, y: 0.95)
+        },
+                       completion: { _ in
+            UIView.animate(withDuration: 0.1,
+                           animations: {
+                self.categoryButton.transform = .identity
+            }, completion: { _ in
+                //добавить метод
+            })
+        })
+    }
+    
+    @objc private func scheduleButtonTapped() {
+        UIView.animate(withDuration: 0.1,
+                       animations: {
+            self.scheduleButton.transform = CGAffineTransform(scaleX: 0.95, y: 0.95)
+        },
+                       completion: { _ in
+            UIView.animate(withDuration: 0.1,
+                           animations: {
+                self.scheduleButton.transform = .identity
+            }, completion: { _ in
+                self.presentDaysSelection()
+            })
+        })
+    }
+    
+    private func presentDaysSelection() {
+        let vc = DaysSelectionViewController()
+        vc.modalPresentationStyle = .fullScreen
+        
+        let transition = CATransition()
+        transition.duration = 0.3
+        transition.type = .push
+        transition.subtype = .fromRight
+        transition.timingFunction = CAMediaTimingFunction(name: .easeInEaseOut)
+        
+        view.window?.layer.add(transition, forKey: kCATransition)
+        present(vc, animated: false)
+    }
     
     private static func makeListItem(title: String, isUp: Bool) -> UIButton {
         let button = UIButton(type: .system)
@@ -413,14 +458,14 @@ extension NewHabitViewController: UITextFieldDelegate {
               let rangeInText = Range(range, in: currentText) else {
             return true
         }
-
+        
         let updatedText = currentText.replacingCharacters(in: rangeInText, with: string)
-
+        
         if updatedText.count > 38 {
             showLengthExceededAlert()
             return false
         }
-
+        
         return true
     }
     
@@ -429,5 +474,5 @@ extension NewHabitViewController: UITextFieldDelegate {
         alert.addAction(UIAlertAction(title: "Ок", style: .default))
         present(alert, animated: true)
     }
-
+    
 }
