@@ -84,7 +84,7 @@ final class TrackersViewController : UIViewController {
     @objc private func didTapAdd() {
         print("➕ Add tapped")
         let vc = TrackerTypeViewController()
-        vc.modalPresentationStyle = .pageSheet
+        vc.modalPresentationStyle = .fullScreen
         present(vc, animated: true)
     }
     
