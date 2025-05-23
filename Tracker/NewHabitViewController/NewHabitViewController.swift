@@ -29,6 +29,7 @@ final class NewHabitViewController: UIViewController {
     private var selectedColorIndex: IndexPath?
     
     // MARK: - UI
+    private var selectedWeekdays: Set<Tracker.Weekday> = []
     
     private let scrollView = UIScrollView()
     private let contentView = UIView()
@@ -320,6 +321,8 @@ final class NewHabitViewController: UIViewController {
     
     private func presentDaysSelection() {
         let vc = DaysSelectionViewController()
+        vc.delegate = self
+        vc.configure(with: selectedWeekdays)
         vc.modalPresentationStyle = .fullScreen
         
         let transition = CATransition()
@@ -476,3 +479,41 @@ extension NewHabitViewController: UITextFieldDelegate {
     }
     
 }
+
+extension NewHabitViewController: DaysSelectionViewControllerDelegate {
+    func didSelectWeekdays(_ weekdays: Set<Tracker.Weekday>) {
+        selectedWeekdays = weekdays
+        updateScheduleButtonSubtitle()
+    }
+    
+    private func updateScheduleButtonSubtitle() {
+        let shortNames = selectedWeekdays
+            .sorted { $0.rawValue < $1.rawValue }
+            .map { $0.shortName }
+            .joined(separator: ", ")
+
+        let title = "Расписание"
+        let subtitle = shortNames.isEmpty ? "Не выбрано" : shortNames
+
+        let fullText = "\(title)\n\(subtitle)"
+        let attributedText = NSMutableAttributedString(string: fullText)
+
+        attributedText.addAttribute(.font,
+                                     value: UIFont.YPFont(16, weight: .regular),
+                                     range: (fullText as NSString).range(of: title))
+
+        attributedText.addAttribute(.font,
+                                     value: UIFont.YPFont(14, weight: .regular),
+                                     range: (fullText as NSString).range(of: subtitle))
+
+        attributedText.addAttribute(.foregroundColor,
+                                     value: UIColor.ypGray,
+                                     range: (fullText as NSString).range(of: subtitle))
+
+        scheduleButton.setAttributedTitle(attributedText, for: .normal)
+        scheduleButton.titleLabel?.numberOfLines = 2
+    }
+
+
+}
+

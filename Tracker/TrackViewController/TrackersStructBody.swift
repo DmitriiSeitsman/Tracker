@@ -30,3 +30,17 @@ struct TrackerRecord: Equatable, Hashable {
     let id: UUID      // ID трекера
     let date: Date    // дата выполнения
 }
+
+extension Tracker.Weekday {
+    var shortName: String {
+        switch self {
+        case .monday: return "Пн"
+        case .tuesday: return "Вт"
+        case .wednesday: return "Ср"
+        case .thursday: return "Чт"
+        case .friday: return "Пт"
+        case .saturday: return "Сб"
+        case .sunday: return "Вс"
+        }
+    }
+}
