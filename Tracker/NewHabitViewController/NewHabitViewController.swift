@@ -27,9 +27,11 @@ final class NewHabitViewController: UIViewController {
     
     private var selectedEmojiIndex: IndexPath?
     private var selectedColorIndex: IndexPath?
+    private var selectedCategory: CategoryEntity?
+    private var selectedWeekdays: Set<Tracker.Weekday> = []
+
     
     // MARK: - UI
-    private var selectedWeekdays: Set<Tracker.Weekday> = []
     
     private let scrollView = UIScrollView()
     private let contentView = UIView()
@@ -293,24 +295,43 @@ final class NewHabitViewController: UIViewController {
     }
     
     @objc private func createButtonTapped() {
-        AnimationHelper.animateButtonPress(createButton) {
-            // Здесь можешь вызвать свой метод создания привычки
-            print("Создание привычки") // Временно
+        AnimationHelper.animateButtonPress(createButton) { [self] in
+            guard
+                let name = nameTextField.text,
+                let selectedEmojiIndex,
+                let selectedColorIndex,
+                let selectedCategory,
+                !selectedWeekdays.isEmpty
+            else { return }
+
+            let tracker = Tracker(
+                id: UUID(),
+                title: name,
+                color: colors[selectedColorIndex.item],
+                emoji: emojis[selectedEmojiIndex.item],
+                schedule: selectedWeekdays
+            )
+
+            TrackerStore.shared.addTracker(tracker, categoryTitle: selectedCategory.name ?? "Без категории")
+            
+            presentingViewController?.presentingViewController?.dismiss(animated: true)
         }
     }
+
     
     @objc private func categoryButtonTapped() {
         AnimationHelper.animateButtonPress(categoryButton) { [weak self] in
             guard let self = self else { return }
 
             let categoryVC = CategoryViewController()
+            categoryVC.delegate = self
+            
             let navController = UINavigationController(rootViewController: categoryVC)
-            present(navController, animated: true)
-
+            navController.modalPresentationStyle = .pageSheet
+            self.present(navController, animated: true)
         }
     }
 
-    
     @objc private func scheduleButtonTapped() {
         AnimationHelper.animateButtonPress(scheduleButton) { [weak self] in
             self?.presentDaysSelection()
@@ -512,6 +533,36 @@ extension NewHabitViewController: DaysSelectionViewControllerDelegate {
         scheduleButton.titleLabel?.numberOfLines = 2
     }
 
-
 }
+
+extension NewHabitViewController: CategorySelectionDelegate {
+    func didSelectCategory(_ category: CategoryEntity) {
+        selectedCategory = category
+        updateCategoryButtonSubtitle()
+    }
+
+    private func updateCategoryButtonSubtitle() {
+        let title = "Категория"
+        let subtitle = selectedCategory?.name ?? "Не выбрано"
+
+        let fullText = "\(title)\n\(subtitle)"
+        let attributedText = NSMutableAttributedString(string: fullText)
+
+        attributedText.addAttribute(.font,
+                                     value: UIFont.YPFont(16, weight: .regular),
+                                     range: (fullText as NSString).range(of: title))
+
+        attributedText.addAttribute(.font,
+                                     value: UIFont.YPFont(14, weight: .regular),
+                                     range: (fullText as NSString).range(of: subtitle))
+
+        attributedText.addAttribute(.foregroundColor,
+                                     value: UIColor.ypGray,
+                                     range: (fullText as NSString).range(of: subtitle))
+
+        categoryButton.setAttributedTitle(attributedText, for: .normal)
+        categoryButton.titleLabel?.numberOfLines = 2
+    }
+}
+
 
