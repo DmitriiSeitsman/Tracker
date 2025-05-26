@@ -164,7 +164,8 @@ final class NewHabitViewController: UIViewController {
     
     override func viewDidLoad() {
         super.viewDidLoad()
-        cancelButton.addTarget(self, action: #selector(didTapCancel), for: .touchUpInside)
+        cancelButton.addTarget(self, action: #selector(cancelButtonTapped), for: .touchUpInside)
+        createButton.addTarget(self, action: #selector(createButtonTapped), for: .touchUpInside)
         scheduleButton.addTarget(self, action: #selector(scheduleButtonTapped), for: .touchUpInside)
         categoryButton.addTarget(self, action: #selector(categoryButtonTapped), for: .touchUpInside)
         
@@ -285,8 +286,17 @@ final class NewHabitViewController: UIViewController {
     
     // MARK: - Helpers
     
-    @objc private func didTapCancel() {
-        presentingViewController?.presentingViewController?.dismiss(animated: true)
+    @objc private func cancelButtonTapped() {
+        animateButtonPress(cancelButton) { [weak self] in
+            self?.presentingViewController?.presentingViewController?.dismiss(animated: true)
+        }
+    }
+    
+    @objc private func createButtonTapped() {
+        animateButtonPress(createButton) {
+            // Здесь можешь вызвать свой метод создания привычки
+            print("Создание привычки") // Временно
+        }
     }
     
     @objc private func categoryButtonTapped() {
@@ -315,6 +325,18 @@ final class NewHabitViewController: UIViewController {
                 self.scheduleButton.transform = .identity
             }, completion: { _ in
                 self.presentDaysSelection()
+            })
+        })
+    }
+    
+    private func animateButtonPress(_ button: UIButton, completion: (() -> Void)? = nil) {
+        UIView.animate(withDuration: 0.1, animations: {
+            button.transform = CGAffineTransform(scaleX: 0.95, y: 0.95)
+        }, completion: { _ in
+            UIView.animate(withDuration: 0.1, animations: {
+                button.transform = .identity
+            }, completion: { _ in
+                completion?()
             })
         })
     }
