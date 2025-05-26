@@ -77,7 +77,10 @@ final class CategoryViewController: UIViewController {
         view.backgroundColor = .ypWhite
         setupLayout()
         addButton.addTarget(self, action: #selector(addButtonTapped), for: .touchUpInside)
+
+        resetCategorySelection()
     }
+
 
     override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
@@ -122,27 +125,15 @@ final class CategoryViewController: UIViewController {
     }
 
     // MARK: - Helpers
-    @objc private func deleteCategory(_ sender: UIButton) {
-        let index = sender.tag
-        let category = categories[index]
-
-        let alert = UIAlertController(
-            title: "Удалить категорию?",
-            message: "Это действие нельзя отменить.",
-            preferredStyle: .alert
-        )
-
-        alert.addAction(UIAlertAction(title: "Отмена", style: .cancel))
-        alert.addAction(UIAlertAction(title: "Удалить", style: .destructive) { [weak self] _ in
-            guard let self = self else { return }
-            CoreDataManager.shared.context.delete(category)
+    private func resetCategorySelection() {
+        let request: NSFetchRequest<CategoryEntity> = CategoryEntity.fetchRequest()
+        if let all = try? CoreDataManager.shared.context.fetch(request) {
+            for category in all {
+                category.isSelected = false
+            }
             CoreDataManager.shared.saveContext()
-            self.fetchCategories()
-        })
-
-        present(alert, animated: true)
+        }
     }
-
 
     private func fetchCategories() {
         let request: NSFetchRequest<CategoryEntity> = CategoryEntity.fetchRequest()
@@ -178,15 +169,7 @@ final class CategoryViewController: UIViewController {
         checkmark.translatesAutoresizingMaskIntoConstraints = false
         checkmark.setContentHuggingPriority(.required, for: .horizontal)
 
-        let deleteButton = UIButton(type: .system)
-        deleteButton.setImage(UIImage(systemName: "trash"), for: .normal)
-        deleteButton.tintColor = .ypRed
-        deleteButton.tag = index
-        deleteButton.addTarget(self, action: #selector(deleteCategory(_:)), for: .touchUpInside)
-        deleteButton.translatesAutoresizingMaskIntoConstraints = false
-        deleteButton.setContentHuggingPriority(.required, for: .horizontal)
-
-        let rowStack = UIStackView(arrangedSubviews: [label, checkmark, deleteButton])
+        let rowStack = UIStackView(arrangedSubviews: [label, checkmark])
         rowStack.axis = .horizontal
         rowStack.alignment = .center
         rowStack.distribution = .fill
@@ -205,12 +188,19 @@ final class CategoryViewController: UIViewController {
             wrapper.heightAnchor.constraint(equalToConstant: 75)
         ])
 
+        wrapper.tag = index
+
+        // tap = выбор категории
         let tapGesture = UITapGestureRecognizer(target: self, action: #selector(categoryTapped(_:)))
         wrapper.addGestureRecognizer(tapGesture)
-        wrapper.tag = index
+
+        // long press = меню
+        let interaction = UIContextMenuInteraction(delegate: self)
+        wrapper.addInteraction(interaction)
 
         return wrapper
     }
+
 
 
     private func makeDivider(inset: CGFloat = 0) -> UIView {
@@ -245,3 +235,52 @@ final class CategoryViewController: UIViewController {
         }
     }
 }
+
+extension CategoryViewController: UIContextMenuInteractionDelegate {
+    func contextMenuInteraction(_ interaction: UIContextMenuInteraction,
+                                configurationForMenuAtLocation location: CGPoint) -> UIContextMenuConfiguration? {
+        guard let wrapperView = interaction.view,
+              wrapperView.tag < categories.count else { return nil }
+
+        let category = categories[wrapperView.tag]
+
+        return UIContextMenuConfiguration(identifier: wrapperView.tag as NSCopying, previewProvider: nil) { _ in
+            let edit = UIAction(title: "Редактировать", image: UIImage(systemName: "pencil")) { [weak self] _ in
+                self?.editCategory(category)
+            }
+
+            let delete = UIAction(title: "Удалить", image: UIImage(systemName: "trash"), attributes: .destructive) { [weak self] _ in
+                self?.confirmDeleteCategory(category)
+            }
+
+            return UIMenu(title: "", children: [edit, delete])
+        }
+    }
+    
+    private func editCategory(_ category: CategoryEntity) {
+        let editVC = NewCategoryViewController()
+        editVC.configure(with: category)
+        navigationController?.pushViewController(editVC, animated: true)
+    }
+
+    private func confirmDeleteCategory(_ category: CategoryEntity) {
+        let alert = UIAlertController(
+            title: "Удалить категорию?",
+            message: "Это действие нельзя отменить.",
+            preferredStyle: .alert
+        )
+        
+        alert.addAction(UIAlertAction(title: "Отмена", style: .cancel))
+        alert.addAction(UIAlertAction(title: "Удалить", style: .destructive) { [weak self] _ in
+            guard let self = self else { return }
+            CoreDataManager.shared.context.delete(category)
+            CoreDataManager.shared.saveContext()
+            self.fetchCategories()
+        })
+        
+        present(alert, animated: true)
+    }
+
+
+}
+

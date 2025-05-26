@@ -1,6 +1,8 @@
 import UIKit
 
 final class NewCategoryViewController: UIViewController {
+    
+    private var editingCategory: CategoryEntity?
 
     // MARK: - UI
 
@@ -37,7 +39,7 @@ final class NewCategoryViewController: UIViewController {
         button.titleLabel?.font = .systemFont(ofSize: 16, weight: .medium)
         button.layer.cornerRadius = 16
         button.translatesAutoresizingMaskIntoConstraints = false
-        button.isEnabled = false // по умолчанию неактивна
+        button.isEnabled = false
         return button
     }()
 
@@ -93,16 +95,29 @@ final class NewCategoryViewController: UIViewController {
     }
 
     @objc private func createTapped() {
-        guard let name = nameTextField.text, !name.trimmingCharacters(in: .whitespaces).isEmpty else { return }
+        guard let name = nameTextField.text?.trimmingCharacters(in: .whitespaces), !name.isEmpty else { return }
 
         AnimationHelper.animateButtonPress(createButton) {
-            let newCategory = CategoryEntity(context: CoreDataManager.shared.context)
-            newCategory.name = name
-            newCategory.isSelected = false
+            if let category = self.editingCategory {
+                // Режим редактирования
+                category.name = name
+            } else {
+                // Режим создания
+                let newCategory = CategoryEntity(context: CoreDataManager.shared.context)
+                newCategory.name = name
+                newCategory.isSelected = false
+            }
 
             CoreDataManager.shared.saveContext()
             self.navigationController?.popViewController(animated: true)
         }
+    }
+    
+    func configure(with category: CategoryEntity) {
+        editingCategory = category
+        nameTextField.text = category.name
+        textFieldDidChange(nameTextField)
+        titleLabel.text = "Редактирование категории"
     }
 
 }
