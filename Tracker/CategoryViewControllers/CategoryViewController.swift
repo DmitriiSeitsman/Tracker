@@ -1,7 +1,14 @@
 import UIKit
 import CoreData
 
+protocol CategorySelectionDelegate: AnyObject {
+    func didSelectCategory(_ category: CategoryEntity)
+}
+
+
 final class CategoryViewController: UIViewController {
+    
+    weak var delegate: CategorySelectionDelegate?
 
     private var categories: [CategoryEntity] = []
 
@@ -46,22 +53,21 @@ final class CategoryViewController: UIViewController {
         return button
     }()
 
-    private let tableContainerView: UIView = {
+    private let categoriesContainer: UIView = {
         let view = UIView()
-        view.backgroundColor = .white
+        view.backgroundColor = .ypLightGray
         view.layer.cornerRadius = 16
-        view.layer.masksToBounds = true
         view.translatesAutoresizingMaskIntoConstraints = false
         return view
     }()
 
-    private let tableView: UITableView = {
-        let tableView = UITableView()
-        tableView.translatesAutoresizingMaskIntoConstraints = false
-        tableView.register(CategoryCell.self, forCellReuseIdentifier: CategoryCell.reuseIdentifier)
-        tableView.separatorStyle = .none
-        tableView.backgroundColor = .clear
-        return tableView
+    private let categoriesStack: UIStackView = {
+        let stack = UIStackView()
+        stack.axis = .vertical
+        stack.spacing = 0
+        stack.distribution = .fill
+        stack.translatesAutoresizingMaskIntoConstraints = false
+        return stack
     }()
 
     // MARK: - Lifecycle
@@ -69,10 +75,6 @@ final class CategoryViewController: UIViewController {
     override func viewDidLoad() {
         super.viewDidLoad()
         view.backgroundColor = .ypWhite
-
-        tableView.delegate = self
-        tableView.dataSource = self
-
         setupLayout()
         addButton.addTarget(self, action: #selector(addButtonTapped), for: .touchUpInside)
     }
@@ -89,8 +91,8 @@ final class CategoryViewController: UIViewController {
         view.addSubview(emptyImageView)
         view.addSubview(descriptionLabel)
         view.addSubview(addButton)
-        view.addSubview(tableContainerView)
-        tableContainerView.addSubview(tableView)
+        view.addSubview(categoriesContainer)
+        categoriesContainer.addSubview(categoriesStack)
 
         NSLayoutConstraint.activate([
             titleLabel.topAnchor.constraint(equalTo: view.topAnchor, constant: 78),
@@ -107,95 +109,139 @@ final class CategoryViewController: UIViewController {
             addButton.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -20),
             addButton.heightAnchor.constraint(equalToConstant: 60),
 
-            tableContainerView.topAnchor.constraint(equalTo: titleLabel.bottomAnchor, constant: 16),
-            tableContainerView.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 16),
-            tableContainerView.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -16),
-            tableContainerView.bottomAnchor.constraint(equalTo: addButton.topAnchor, constant: -16),
+            categoriesContainer.topAnchor.constraint(equalTo: titleLabel.bottomAnchor, constant: 16),
+            categoriesContainer.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 20),
+            categoriesContainer.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -20),
+            categoriesContainer.bottomAnchor.constraint(lessThanOrEqualTo: addButton.topAnchor, constant: -16),
 
-            tableView.topAnchor.constraint(equalTo: tableContainerView.topAnchor),
-            tableView.leadingAnchor.constraint(equalTo: tableContainerView.leadingAnchor),
-            tableView.trailingAnchor.constraint(equalTo: tableContainerView.trailingAnchor),
-            tableView.bottomAnchor.constraint(equalTo: tableContainerView.bottomAnchor)
+            categoriesStack.topAnchor.constraint(equalTo: categoriesContainer.topAnchor, constant: 16),
+            categoriesStack.bottomAnchor.constraint(equalTo: categoriesContainer.bottomAnchor, constant: -16),
+            categoriesStack.leadingAnchor.constraint(equalTo: categoriesContainer.leadingAnchor, constant: 16),
+            categoriesStack.trailingAnchor.constraint(equalTo: categoriesContainer.trailingAnchor, constant: -16)
         ])
     }
 
     // MARK: - Helpers
+    @objc private func deleteCategory(_ sender: UIButton) {
+        let index = sender.tag
+        let category = categories[index]
+
+        let alert = UIAlertController(
+            title: "Удалить категорию?",
+            message: "Это действие нельзя отменить.",
+            preferredStyle: .alert
+        )
+
+        alert.addAction(UIAlertAction(title: "Отмена", style: .cancel))
+        alert.addAction(UIAlertAction(title: "Удалить", style: .destructive) { [weak self] _ in
+            guard let self = self else { return }
+            CoreDataManager.shared.context.delete(category)
+            CoreDataManager.shared.saveContext()
+            self.fetchCategories()
+        })
+
+        present(alert, animated: true)
+    }
+
 
     private func fetchCategories() {
         let request: NSFetchRequest<CategoryEntity> = CategoryEntity.fetchRequest()
         categories = (try? CoreDataManager.shared.context.fetch(request)) ?? []
 
         let hasCategories = !categories.isEmpty
-        tableContainerView.isHidden = !hasCategories
+        categoriesContainer.isHidden = !hasCategories
         emptyImageView.isHidden = hasCategories
         descriptionLabel.isHidden = hasCategories
 
-        tableView.reloadData()
+        categoriesStack.arrangedSubviews.forEach { $0.removeFromSuperview() }
+
+        for (index, category) in categories.enumerated() {
+            let row = makeCategoryRow(for: category, index: index)
+            categoriesStack.addArrangedSubview(row)
+
+            if index < categories.count - 1 {
+                categoriesStack.addArrangedSubview(makeDivider())
+            }
+        }
+    }
+
+    private func makeCategoryRow(for category: CategoryEntity, index: Int) -> UIView {
+        let label = UILabel()
+        label.text = category.name
+        label.font = .YPFont(17, weight: .regular)
+        label.textColor = .label
+        label.translatesAutoresizingMaskIntoConstraints = false
+
+        let checkmark = UIImageView()
+        checkmark.image = category.isSelected ? UIImage(systemName: "checkmark.circle.fill") : UIImage(systemName: "circle")
+        checkmark.tintColor = .ypBlue
+        checkmark.translatesAutoresizingMaskIntoConstraints = false
+        checkmark.setContentHuggingPriority(.required, for: .horizontal)
+
+        let deleteButton = UIButton(type: .system)
+        deleteButton.setImage(UIImage(systemName: "trash"), for: .normal)
+        deleteButton.tintColor = .ypRed
+        deleteButton.tag = index
+        deleteButton.addTarget(self, action: #selector(deleteCategory(_:)), for: .touchUpInside)
+        deleteButton.translatesAutoresizingMaskIntoConstraints = false
+        deleteButton.setContentHuggingPriority(.required, for: .horizontal)
+
+        let rowStack = UIStackView(arrangedSubviews: [label, checkmark, deleteButton])
+        rowStack.axis = .horizontal
+        rowStack.alignment = .center
+        rowStack.distribution = .fill
+        rowStack.spacing = 8
+        rowStack.translatesAutoresizingMaskIntoConstraints = false
+
+        let wrapper = UIView()
+        wrapper.translatesAutoresizingMaskIntoConstraints = false
+        wrapper.addSubview(rowStack)
+
+        NSLayoutConstraint.activate([
+            rowStack.topAnchor.constraint(equalTo: wrapper.topAnchor),
+            rowStack.bottomAnchor.constraint(equalTo: wrapper.bottomAnchor),
+            rowStack.leadingAnchor.constraint(equalTo: wrapper.leadingAnchor),
+            rowStack.trailingAnchor.constraint(equalTo: wrapper.trailingAnchor),
+            wrapper.heightAnchor.constraint(equalToConstant: 75)
+        ])
+
+        let tapGesture = UITapGestureRecognizer(target: self, action: #selector(categoryTapped(_:)))
+        wrapper.addGestureRecognizer(tapGesture)
+        wrapper.tag = index
+
+        return wrapper
+    }
+
+
+    private func makeDivider(inset: CGFloat = 0) -> UIView {
+        let divider = UIView()
+        divider.backgroundColor = .separator
+        divider.translatesAutoresizingMaskIntoConstraints = false
+        divider.heightAnchor.constraint(equalToConstant: 1).isActive = true
+        return divider
     }
 
     // MARK: - Actions
+
+    @objc private func categoryTapped(_ gesture: UITapGestureRecognizer) {
+        guard let index = gesture.view?.tag else { return }
+
+        for (i, cat) in categories.enumerated() {
+            cat.isSelected = (i == index)
+        }
+
+        CoreDataManager.shared.saveContext()
+        fetchCategories()
+
+        delegate?.didSelectCategory(categories[index])
+        navigationController?.popViewController(animated: true)
+    }
+
 
     @objc private func addButtonTapped() {
         AnimationHelper.animateButtonPress(addButton) { [weak self] in
             let newCategoryVC = NewCategoryViewController()
             self?.navigationController?.pushViewController(newCategoryVC, animated: true)
         }
-    }
-}
-
-// MARK: - UITableView
-
-extension CategoryViewController: UITableViewDataSource, UITableViewDelegate {
-
-    func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
-        categories.count
-    }
-
-    func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
-        let category = categories[indexPath.row]
-        let cell = tableView.dequeueReusableCell(withIdentifier: CategoryCell.reuseIdentifier, for: indexPath) as! CategoryCell
-        cell.configure(with: category.name ?? "", selected: category.isSelected)
-        cell.selectionStyle = .none
-        return cell
-    }
-
-    func tableView(_ tableView: UITableView, heightForRowAt indexPath: IndexPath) -> CGFloat {
-        return 75
-    }
-
-    func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
-        for (i, cat) in categories.enumerated() {
-            cat.isSelected = (i == indexPath.row)
-        }
-        CoreDataManager.shared.saveContext()
-        tableView.reloadData()
-    }
-
-    func tableView(_ tableView: UITableView, editingStyleForRowAt indexPath: IndexPath) -> UITableViewCell.EditingStyle {
-        .delete
-    }
-
-    func tableView(_ tableView: UITableView,
-                   commit editingStyle: UITableViewCell.EditingStyle,
-                   forRowAt indexPath: IndexPath) {
-        guard editingStyle == .delete else { return }
-
-        let categoryToDelete = categories[indexPath.row]
-        CoreDataManager.shared.context.delete(categoryToDelete)
-        CoreDataManager.shared.saveContext()
-
-        categories.remove(at: indexPath.row)
-        tableView.deleteRows(at: [indexPath], with: .automatic)
-
-        if categories.isEmpty {
-            tableContainerView.isHidden = true
-            emptyImageView.isHidden = false
-            descriptionLabel.isHidden = false
-        }
-    }
-
-    func tableView(_ tableView: UITableView,
-                   titleForDeleteConfirmationButtonForRowAt indexPath: IndexPath) -> String? {
-        "Удалить"
     }
 }
