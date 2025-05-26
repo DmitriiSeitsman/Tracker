@@ -36,12 +36,20 @@ final class TrackerTypeViewController: UIViewController {
         view.backgroundColor = .ypWhite
         setupLayout()
         habitButton.addTarget(self, action: #selector(habitButtonTapped), for: .touchUpInside)
+        irregularEventButton.addTarget(self, action: #selector(irregularEventButtonTapped), for: .touchUpInside)
 
     }
     
     @objc private func habitButtonTapped() {
         print("habitButtonTapped")
         let navVC = UINavigationController(rootViewController: NewHabitViewController())
+        navVC.modalPresentationStyle = .fullScreen
+        present(navVC, animated: true)
+    }
+    
+    @objc private func irregularEventButtonTapped() {
+        print("irregularEventButtonTapped")
+        let navVC = UINavigationController(rootViewController: UnscheduledViewController())
         navVC.modalPresentationStyle = .fullScreen
         present(navVC, animated: true)
     }
