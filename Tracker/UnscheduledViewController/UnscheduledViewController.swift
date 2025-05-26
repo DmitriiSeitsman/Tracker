@@ -282,43 +282,27 @@ final class UnscheduledViewController: UIViewController {
     // MARK: - Helpers
     
     @objc private func cancelButtonTapped() {
-        animateButtonPress(cancelButton) { [weak self] in
+        AnimationHelper.animateButtonPress(cancelButton) { [weak self] in
             self?.presentingViewController?.presentingViewController?.dismiss(animated: true)
         }
     }
     
     @objc private func createButtonTapped() {
-        animateButtonPress(createButton) {
-            // Здесь можешь вызвать свой метод создания привычки
-            print("Создание привычки") // Временно
+        AnimationHelper.animateButtonPress(createButton) {
+            print("Создание события") // или вызов метода
         }
     }
+
     
     @objc private func categoryButtonTapped() {
-        UIView.animate(withDuration: 0.1,
-                       animations: {
-            self.categoryButton.transform = CGAffineTransform(scaleX: 0.95, y: 0.95)
-        },
-                       completion: { _ in
-            UIView.animate(withDuration: 0.1,
-                           animations: {
-                self.categoryButton.transform = .identity
-            }, completion: { _ in
-                //добавить метод
-            })
-        })
-    }
-    
-    private func animateButtonPress(_ button: UIButton, completion: (() -> Void)? = nil) {
-        UIView.animate(withDuration: 0.1, animations: {
-            button.transform = CGAffineTransform(scaleX: 0.95, y: 0.95)
-        }, completion: { _ in
-            UIView.animate(withDuration: 0.1, animations: {
-                button.transform = .identity
-            }, completion: { _ in
-                completion?()
-            })
-        })
+        AnimationHelper.animateButtonPress(categoryButton) { [weak self] in
+            guard let self = self else { return }
+
+            let categoryVC = CategoryViewController()
+            let navController = UINavigationController(rootViewController: categoryVC)
+            present(navController, animated: true)
+
+        }
     }
     
     private static func makeListItem(title: String) -> UIButton {
