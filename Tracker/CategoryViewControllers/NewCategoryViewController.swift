@@ -1,14 +1,16 @@
 import UIKit
+import CoreData
 
 final class NewCategoryViewController: UIViewController {
-    
+
+    // MARK: - Properties
+
     private var editingCategory: CategoryEntity?
 
     // MARK: - UI
 
     private let titleLabel: UILabel = {
         let label = UILabel()
-        label.text = "Новая категория"
         label.font = .YPFont(16, weight: .medium)
         label.textColor = .ypBlack
         label.textAlignment = .center
@@ -21,13 +23,15 @@ final class NewCategoryViewController: UIViewController {
         textField.placeholder = "Введите название категории"
         textField.backgroundColor = .ypLightGray
         textField.layer.cornerRadius = 16
-        textField.translatesAutoresizingMaskIntoConstraints = false
-        textField.heightAnchor.constraint(equalToConstant: 75).isActive = true
         textField.textColor = .ypBlack
         textField.font = .systemFont(ofSize: 17)
+        textField.translatesAutoresizingMaskIntoConstraints = false
+        textField.heightAnchor.constraint(equalToConstant: 75).isActive = true
+
         let padding = UIView(frame: CGRect(x: 0, y: 0, width: 16, height: 75))
         textField.leftView = padding
         textField.leftViewMode = .always
+
         return textField
     }()
 
@@ -38,8 +42,8 @@ final class NewCategoryViewController: UIViewController {
         button.backgroundColor = .ypGray
         button.titleLabel?.font = .systemFont(ofSize: 16, weight: .medium)
         button.layer.cornerRadius = 16
-        button.translatesAutoresizingMaskIntoConstraints = false
         button.isEnabled = false
+        button.translatesAutoresizingMaskIntoConstraints = false
         return button
     }()
 
@@ -48,19 +52,21 @@ final class NewCategoryViewController: UIViewController {
     override func viewDidLoad() {
         super.viewDidLoad()
         view.backgroundColor = .ypWhite
-        setupLayout()
-
         navigationItem.hidesBackButton = true
 
-        nameTextField.addTarget(self, action: #selector(textFieldDidChange), for: .editingChanged)
-        createButton.addTarget(self, action: #selector(createTapped), for: .touchUpInside)
+        setupLayout()
+        setupActions()
 
         let tapGesture = UITapGestureRecognizer(target: self, action: #selector(dismissKeyboard))
         view.addGestureRecognizer(tapGesture)
     }
 
+    override func viewWillAppear(_ animated: Bool) {
+        super.viewWillAppear(animated)
+        updateUIIfEditing()
+    }
 
-    // MARK: - Layout
+    // MARK: - Setup
 
     private func setupLayout() {
         view.addSubview(titleLabel)
@@ -82,8 +88,23 @@ final class NewCategoryViewController: UIViewController {
         ])
     }
 
-    // MARK: - Logic
-    
+    private func setupActions() {
+        nameTextField.addTarget(self, action: #selector(textFieldDidChange), for: .editingChanged)
+        createButton.addTarget(self, action: #selector(createTapped), for: .touchUpInside)
+    }
+
+    private func updateUIIfEditing() {
+        if let category = editingCategory {
+            titleLabel.text = "Редактирование категории"
+            nameTextField.text = category.name
+            textFieldDidChange(nameTextField)
+        } else {
+            titleLabel.text = "Новая категория"
+        }
+    }
+
+    // MARK: - Actions
+
     @objc private func dismissKeyboard() {
         view.endEditing(true)
     }
@@ -95,29 +116,42 @@ final class NewCategoryViewController: UIViewController {
     }
 
     @objc private func createTapped() {
-        guard let name = nameTextField.text?.trimmingCharacters(in: .whitespaces), !name.isEmpty else { return }
+        guard let name = nameTextField.text?.trimmingCharacters(in: .whitespacesAndNewlines), !name.isEmpty else {
+            return
+        }
 
         AnimationHelper.animateButtonPress(createButton) {
-            if let category = self.editingCategory {
-                // Режим редактирования
-                category.name = name
-            } else {
-                // Режим создания
-                let newCategory = CategoryEntity(context: CoreDataManager.shared.context)
-                newCategory.name = name
-                newCategory.isSelected = false
+            let context = CoreDataManager.shared.context
+
+            if self.editingCategory == nil {
+                // Check for duplicates
+                let request: NSFetchRequest<CategoryEntity> = CategoryEntity.fetchRequest()
+                request.predicate = NSPredicate(format: "name == %@", name)
+                let existing = (try? context.fetch(request)) ?? []
+                if !existing.isEmpty {
+                    self.showDuplicateAlert()
+                    return
+                }
             }
+
+            let category = self.editingCategory ?? CategoryEntity(context: context)
+            category.name = name
+            category.isSelected = false
 
             CoreDataManager.shared.saveContext()
             self.navigationController?.popViewController(animated: true)
         }
     }
-    
-    func configure(with category: CategoryEntity) {
-        editingCategory = category
-        nameTextField.text = category.name
-        textFieldDidChange(nameTextField)
-        titleLabel.text = "Редактирование категории"
+
+    private func showDuplicateAlert() {
+        let alert = UIAlertController(title: "Категория уже существует", message: "Введите другое название.", preferredStyle: .alert)
+        alert.addAction(UIAlertAction(title: "Ок", style: .default))
+        present(alert, animated: true)
     }
 
+    // MARK: - External Configuration
+
+    func configure(with category: CategoryEntity) {
+        editingCategory = category
+    }
 }

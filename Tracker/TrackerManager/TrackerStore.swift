@@ -1,4 +1,3 @@
-
 import CoreData
 import UIKit
 
@@ -8,42 +7,97 @@ final class TrackerStore {
 
     private init() {}
 
+    // MARK: - Add Tracker
+
     func addTracker(_ tracker: Tracker, categoryTitle: String) {
+        guard let category = fetchCategoryEntity(by: categoryTitle) else {
+            print("⚠️ Не найдена категория \(categoryTitle), трекер не сохранён")
+            return
+        }
+
         let entity = TrackerEntity(context: context)
         entity.id = tracker.id
         entity.title = tracker.title
         entity.emoji = tracker.emoji
         entity.colorHex = tracker.color.toHexString()
-        entity.schedule = tracker.schedule.map { NSNumber(value: $0.rawValue) } as NSObject
+        
+        // Сериализация schedule через NSKeyedArchiver
+        let rawValues = tracker.schedule.map { $0.rawValue }
+        do {
+            let data = try NSKeyedArchiver.archivedData(
+                withRootObject: rawValues,
+                requiringSecureCoding: true
+            )
+            entity.schedule = data as NSData
+        } catch {
+            print("❌ Не удалось сохранить schedule: \(error)")
+        }
 
-        // Можешь связать с CategoryEntity, если нужно
+        entity.category = category
+
+        print("✅ Сохраняем трекер в категорию: \(categoryTitle)")
         CoreDataManager.shared.saveContext()
     }
 
-    func fetchAllTrackers() -> [Tracker] {
+    // MARK: - Fetch Trackers
+
+    func fetchAllTrackers() -> [TrackerEntity] {
         let request: NSFetchRequest<TrackerEntity> = TrackerEntity.fetchRequest()
-        let entities = (try? context.fetch(request)) ?? []
-
-        return entities.map { entity in
-            Tracker(
-                id: entity.id ?? UUID(),
-                title: entity.title ?? "",
-                color: UIColor(hex: entity.colorHex ?? "#000000"),
-                emoji: entity.emoji ?? "",
-                schedule: Set((entity.schedule as? [Int] ?? []).compactMap { Tracker.Weekday(rawValue: $0) })
-            )
-        }
+        return (try? context.fetch(request)) ?? []
     }
-    
+
+    // MARK: - Fetch Categories
+
     func fetchAllCategories() -> [TrackerCategory] {
-        let trackers = fetchAllTrackers()
-        let grouped = Dictionary(grouping: trackers) { tracker in
-            return "Без категории"
-        }
+        let request: NSFetchRequest<CategoryEntity> = CategoryEntity.fetchRequest()
+        let categoryEntities = (try? context.fetch(request)) ?? []
 
-        return grouped.map { TrackerCategory(title: $0.key, trackers: $0.value) }
+        print("📦 Загруженные категории: \(categoryEntities.count)")
+
+        return categoryEntities.map { categoryEntity in
+            let trackers = (categoryEntity.trackers?.allObjects as? [TrackerEntity] ?? [])
+                .compactMap { $0.toTracker() }
+
+            print("📂 \(categoryEntity.name ?? "Без имени"): \(trackers.count) трекеров")
+
+            return TrackerCategory(title: categoryEntity.name ?? "Без имени", trackers: trackers)
+        }
     }
 
+    // MARK: - Helpers
+
+    private func fetchCategoryEntity(by title: String) -> CategoryEntity? {
+        let request: NSFetchRequest<CategoryEntity> = CategoryEntity.fetchRequest()
+        request.predicate = NSPredicate(format: "name == %@", title)
+        return try? context.fetch(request).first
+    }
+}
+
+
+extension TrackerEntity {
+    func toTracker() -> Tracker? {
+        guard let id,
+              let title,
+              let emoji,
+              let colorHex,
+              let categoryName = category?.name,
+              let data = schedule as? Data,
+              let raw = try? NSKeyedUnarchiver.unarchivedObject(ofClasses: [NSArray.self, NSNumber.self], from: data) as? [Int]
+        else {
+            return nil
+        }
+
+        let scheduleSet = Set(raw.compactMap { Tracker.Weekday(rawValue: $0) })
+
+        return Tracker(
+            id: id,
+            title: title,
+            color: UIColor(hex: colorHex),
+            emoji: emoji,
+            schedule: scheduleSet,
+            categoryName: categoryName
+        )
+    }
 }
 
 extension UIColor {

@@ -3,7 +3,11 @@ import CoreData
 final class CoreDataManager {
     static let shared = CoreDataManager()
 
-    private init() {}
+    private init() {
+        registerTransformers()
+    }
+
+    // MARK: - Core Data Stack
 
     lazy var context: NSManagedObjectContext = {
         return persistentContainer.viewContext
@@ -13,15 +17,29 @@ final class CoreDataManager {
         let container = NSPersistentContainer(name: "TrackerInfo")
         container.loadPersistentStores { _, error in
             if let error = error {
-                fatalError("❌ Core Data error: \(error)")
+                fatalError("❌ Ошибка при загрузке хранилища Core Data: \(error)")
             }
         }
         return container
     }()
 
+    // MARK: - Transformer Registration
+
+    private func registerTransformers() {
+        ValueTransformer.setValueTransformer(
+            ScheduleTransformer(),
+            forName: NSValueTransformerName("ScheduleTransformer")
+        )
+    }
+
+    // MARK: - Saving
+
     func saveContext() {
-        if context.hasChanges {
-            try? context.save()
+        guard context.hasChanges else { return }
+        do {
+            try context.save()
+        } catch {
+            print("❗️Ошибка при сохранении контекста: \(error)")
         }
     }
 }

@@ -1,4 +1,5 @@
 import UIKit
+import CoreData
 
 final class NewHabitViewController: UIViewController {
     
@@ -309,8 +310,9 @@ final class NewHabitViewController: UIViewController {
                 title: name,
                 color: colors[selectedColorIndex.item],
                 emoji: emojis[selectedEmojiIndex.item],
-                schedule: selectedWeekdays
+                schedule: selectedWeekdays, categoryName: selectedCategory.name
             )
+            print("✅ Сохраняем трекер в категорию:", selectedCategory.name ?? "nil")
 
             TrackerStore.shared.addTracker(tracker, categoryTitle: selectedCategory.name ?? "Без категории")
             
@@ -337,6 +339,18 @@ final class NewHabitViewController: UIViewController {
             self?.presentDaysSelection()
         }
     }
+    
+    func debugPrintAllTrackers() {
+        let request: NSFetchRequest<TrackerEntity> = TrackerEntity.fetchRequest()
+        let entities = (try? CoreDataManager.shared.context.fetch(request)) ?? []
+        
+        print("=== Трекеры в базе ===")
+        for t in entities {
+            print("📌 \(t.title ?? "—") | \(t.category?.name ?? "❌ без категории") | \((t.schedule as? [NSNumber])?.map { $0.intValue } ?? [])")
+
+        }
+    }
+
     
     private func presentDaysSelection() {
         let vc = DaysSelectionViewController()
