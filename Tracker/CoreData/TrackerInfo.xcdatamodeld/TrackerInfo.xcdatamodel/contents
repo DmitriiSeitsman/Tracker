@@ -3,12 +3,14 @@
     <entity name="CategoryEntity" representedClassName=".CategoryEntity" syncable="YES" codeGenerationType="class">
         <attribute name="isSelected" optional="YES" attributeType="Boolean" usesScalarValueType="YES"/>
         <attribute name="name" optional="YES" attributeType="String"/>
+        <relationship name="trackers" optional="YES" toMany="YES" deletionRule="Nullify" destinationEntity="TrackerEntity" inverseName="category" inverseEntity="TrackerEntity"/>
     </entity>
     <entity name="TrackerEntity" representedClassName="TrackerEntity" syncable="YES" codeGenerationType="class">
         <attribute name="colorHex" optional="YES" attributeType="String"/>
         <attribute name="emoji" optional="YES" attributeType="String"/>
         <attribute name="id" optional="YES" attributeType="UUID" usesScalarValueType="NO"/>
-        <attribute name="schedule" optional="YES" attributeType="Transformable"/>
+        <attribute name="schedule" optional="YES" attributeType="Transformable" valueTransformerName="ScheduleTransformer"/>
         <attribute name="title" optional="YES" attributeType="String"/>
+        <relationship name="category" optional="YES" maxCount="1" deletionRule="Nullify" destinationEntity="CategoryEntity" inverseName="trackers" inverseEntity="CategoryEntity"/>
     </entity>
 </model>
