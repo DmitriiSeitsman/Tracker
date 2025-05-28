@@ -1,6 +1,8 @@
 import UIKit
 
 final class TrackerTypeViewController: UIViewController {
+    
+    var currentDate: Date = Date()
 
     private let titleLabel: UILabel = {
         let label = UILabel()
@@ -49,7 +51,9 @@ final class TrackerTypeViewController: UIViewController {
     
     @objc private func irregularEventButtonTapped() {
         print("irregularEventButtonTapped")
-        let navVC = UINavigationController(rootViewController: UnscheduledViewController())
+        let unscheduledVC = UnscheduledViewController()
+        unscheduledVC.currentDate = currentDate // ← передача даты
+        let navVC = UINavigationController(rootViewController: unscheduledVC)
         navVC.modalPresentationStyle = .fullScreen
         present(navVC, animated: true)
     }

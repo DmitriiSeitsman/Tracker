@@ -297,30 +297,38 @@ final class TrackersViewController: UIViewController {
         // Удаляем старые секции
         contentStack.arrangedSubviews.forEach { $0.removeFromSuperview() }
 
-        // Корректируем systemWeekday: 1 (вс) → 7, 2 (пн) → 1, ..., 7 (сб) → 6
+        // Получаем выбранный день недели: 1 (вс) → 7, 2 (пн) → 1, ..., 7 (сб) → 6
         let systemWeekday = Calendar.current.component(.weekday, from: currentDate)
         let adjustedWeekday = (systemWeekday + 5) % 7 + 1
 
         guard let selectedWeekday = Tracker.Weekday(rawValue: adjustedWeekday) else { return }
 
-        // Фильтруем трекеры по выбранному дню недели
+        // Фильтруем трекеры:
+        // - регулярные: если они содержат выбранный день недели
+        // - нерегулярные: если они созданы в текущую выбранную дату (currentDate)
         let filtered = categories.map { category in
-            TrackerCategory(
-                title: category.title,
-                trackers: category.trackers.filter { $0.schedule.contains(selectedWeekday) }
-            )
-        }.filter { !$0.trackers.isEmpty }
+            let filteredTrackers = category.trackers.filter { tracker in
+                if tracker.schedule.isEmpty {
+                    return Calendar.current.isDate(tracker.createdAt, inSameDayAs: currentDate)
+                } else {
+                    return tracker.schedule.contains(selectedWeekday)
+                }
+            }
+            return TrackerCategory(title: category.title, trackers: filteredTrackers)
+        }
+        .filter { !$0.trackers.isEmpty }
 
-        // Обновляем видимость заглушки
+        // Обновляем заглушку
         placeholderImageView.isHidden = !filtered.isEmpty
         placeholderLabel.isHidden = !filtered.isEmpty
 
-        // Добавляем секции в контент
+        // Добавляем секции в стек
         for category in filtered {
             let sectionView = makeCategorySection(title: category.title, trackers: category.trackers)
             contentStack.addArrangedSubview(sectionView)
         }
     }
+
 
 
     private func makeCategorySection(title: String, trackers: [Tracker]) -> UIView {
@@ -356,6 +364,7 @@ final class TrackersViewController: UIViewController {
 
     @objc private func didTapAdd() {
         let vc = TrackerTypeViewController()
+        vc.currentDate = self.currentDate
         vc.modalPresentationStyle = .fullScreen
         present(vc, animated: true)
     }

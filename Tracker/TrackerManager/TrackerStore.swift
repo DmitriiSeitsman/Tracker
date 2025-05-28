@@ -9,7 +9,7 @@ final class TrackerStore {
 
     // MARK: - Add Tracker
 
-    func addTracker(_ tracker: Tracker, categoryTitle: String) {
+    func addTracker(_ tracker: Tracker, categoryTitle: String, createdAt: Date) {
         guard let category = fetchCategoryEntity(by: categoryTitle) else {
             print("⚠️ Не найдена категория \(categoryTitle), трекер не сохранён")
             return
@@ -20,14 +20,12 @@ final class TrackerStore {
         entity.title = tracker.title
         entity.emoji = tracker.emoji
         entity.colorHex = tracker.color.toHexString()
-        
-        // Сериализация schedule через NSKeyedArchiver
+        entity.createdAt = createdAt // 👈 вот это
+
+        // сериализуем пустой schedule как []
         let rawValues = tracker.schedule.map { $0.rawValue }
         do {
-            let data = try NSKeyedArchiver.archivedData(
-                withRootObject: rawValues,
-                requiringSecureCoding: true
-            )
+            let data = try NSKeyedArchiver.archivedData(withRootObject: rawValues, requiringSecureCoding: true)
             entity.schedule = data as NSData
         } catch {
             print("❌ Не удалось сохранить schedule: \(error)")
@@ -35,9 +33,9 @@ final class TrackerStore {
 
         entity.category = category
 
-        print("✅ Сохраняем трекер в категорию: \(categoryTitle)")
         CoreDataManager.shared.saveContext()
     }
+
 
     // MARK: - Fetch Trackers
 
@@ -81,6 +79,7 @@ extension TrackerEntity {
               let emoji,
               let colorHex,
               let categoryName = category?.name,
+              let createdAt,
               let data = schedule as? Data,
               let raw = try? NSKeyedUnarchiver.unarchivedObject(ofClasses: [NSArray.self, NSNumber.self], from: data) as? [Int]
         else {
@@ -95,7 +94,8 @@ extension TrackerEntity {
             color: UIColor(hex: colorHex),
             emoji: emoji,
             schedule: scheduleSet,
-            categoryName: categoryName
+            categoryName: categoryName,
+            createdAt: createdAt
         )
     }
 }

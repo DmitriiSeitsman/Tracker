@@ -1,6 +1,9 @@
 import UIKit
+import CoreData
 
 final class UnscheduledViewController: UIViewController {
+    
+    var currentDate: Date = Date()
     
     // MARK: - Data Sources
     
@@ -27,6 +30,7 @@ final class UnscheduledViewController: UIViewController {
     
     private var selectedEmojiIndex: IndexPath?
     private var selectedColorIndex: IndexPath?
+    private var selectedCategory: CategoryEntity?
     
     // MARK: - UI
     
@@ -93,6 +97,7 @@ final class UnscheduledViewController: UIViewController {
         textField.layer.cornerRadius = 16
         textField.translatesAutoresizingMaskIntoConstraints = false
         textField.heightAnchor.constraint(equalToConstant: 75).isActive = true
+        textField.clearButtonMode = .whileEditing
         let paddingView = UIView(frame: CGRect(x: 0, y: 0, width: 16, height: 75))
         textField.leftView = paddingView
         textField.leftViewMode = .always
@@ -192,6 +197,8 @@ final class UnscheduledViewController: UIViewController {
         contentView.backgroundColor = .ypWhite
         setupLayout()
         nameTextField.delegate = self
+        nameTextField.addTarget(self, action: #selector(nameTextChanged), for: .editingChanged)
+        updateCreateButtonState()
         
     }
     
@@ -223,6 +230,17 @@ final class UnscheduledViewController: UIViewController {
         ])
         
         return container
+    }
+    
+    private func updateCreateButtonState() {
+        let isFormFilled =
+        !(nameTextField.text?.trimmingCharacters(in: .whitespaces).isEmpty ?? true) &&
+        selectedEmojiIndex != nil &&
+        selectedColorIndex != nil &&
+        selectedCategory != nil
+        
+        createButton.isEnabled = isFormFilled
+        createButton.backgroundColor = isFormFilled ? .ypBlack : .ypGray
     }
     
     private func setupLayout() {
@@ -288,20 +306,62 @@ final class UnscheduledViewController: UIViewController {
     }
     
     @objc private func createButtonTapped() {
-        AnimationHelper.animateButtonPress(createButton) {
-            print("Создание события") // или вызов метода
+        AnimationHelper.animateButtonPress(createButton) { [self] in
+            guard
+                let name = nameTextField.text,
+                let selectedEmojiIndex,
+                let selectedColorIndex,
+                let selectedCategory
+            else { return }
+
+            let tracker = Tracker(
+                id: UUID(),
+                title: name,
+                color: colors[selectedColorIndex.item],
+                emoji: emojis[selectedEmojiIndex.item],
+                schedule: [],
+                categoryName: selectedCategory.name,
+                createdAt: currentDate
+            )
+
+            print("Сохраняем трекер в категорию:", selectedCategory.name ?? "nil")
+
+            // 👇 Передаем currentDate как createdAt
+            TrackerStore.shared.addTracker(tracker,
+                                           categoryTitle: selectedCategory.name ?? "Без категории",
+                                           createdAt: currentDate)
+
+            presentingViewController?.presentingViewController?.dismiss(animated: true)
         }
     }
 
     
+    
     @objc private func categoryButtonTapped() {
         AnimationHelper.animateButtonPress(categoryButton) { [weak self] in
             guard let self = self else { return }
-
+            
             let categoryVC = CategoryViewController()
+            categoryVC.delegate = self
+            
             let navController = UINavigationController(rootViewController: categoryVC)
-            present(navController, animated: true)
-
+            navController.modalPresentationStyle = .pageSheet
+            self.present(navController, animated: true)
+        }
+    }
+    
+    @objc private func nameTextChanged() {
+        updateCreateButtonState()
+    }
+    
+    func debugPrintAllTrackers() {
+        let request: NSFetchRequest<TrackerEntity> = TrackerEntity.fetchRequest()
+        let entities = (try? CoreDataManager.shared.context.fetch(request)) ?? []
+        
+        print("=== Трекеры в базе ===")
+        for t in entities {
+            print("📌 \(t.title ?? "—") | \(t.category?.name ?? "❌ без категории") | \((t.schedule as? [NSNumber])?.map { $0.intValue } ?? [])")
+            
         }
     }
     
@@ -325,7 +385,7 @@ final class UnscheduledViewController: UIViewController {
             arrowImageView.centerYAnchor.constraint(equalTo: button.centerYAnchor),
             arrowImageView.trailingAnchor.constraint(equalTo: button.trailingAnchor, constant: -16)
         ])
-        
+
         button.layer.cornerRadius = 16
         return button
     }
@@ -367,8 +427,10 @@ extension UnscheduledViewController: UICollectionViewDataSource, UICollectionVie
             selectedColorIndex = indexPath
         }
         collectionView.reloadData()
+        updateCreateButtonState()
     }
 }
+
 // MARK: - Extensions
 
 extension UnscheduledViewController: UITextFieldDelegate {
@@ -394,6 +456,37 @@ extension UnscheduledViewController: UITextFieldDelegate {
         present(alert, animated: true)
     }
     
+}
+
+extension UnscheduledViewController: CategorySelectionDelegate {
+    func didSelectCategory(_ category: CategoryEntity) {
+        selectedCategory = category
+        updateCategoryButtonSubtitle()
+        updateCreateButtonState()
+    }
+    
+    private func updateCategoryButtonSubtitle() {
+        let title = "Категория"
+        let subtitle = selectedCategory?.name ?? "Не выбрано"
+        
+        let fullText = "\(title)\n\(subtitle)"
+        let attributedText = NSMutableAttributedString(string: fullText)
+        
+        attributedText.addAttribute(.font,
+                                    value: UIFont.YPFont(16, weight: .regular),
+                                    range: (fullText as NSString).range(of: title))
+        
+        attributedText.addAttribute(.font,
+                                    value: UIFont.YPFont(14, weight: .regular),
+                                    range: (fullText as NSString).range(of: subtitle))
+        
+        attributedText.addAttribute(.foregroundColor,
+                                    value: UIColor.ypGray,
+                                    range: (fullText as NSString).range(of: subtitle))
+        
+        categoryButton.setAttributedTitle(attributedText, for: .normal)
+        categoryButton.titleLabel?.numberOfLines = 2
+    }
 }
 
 
