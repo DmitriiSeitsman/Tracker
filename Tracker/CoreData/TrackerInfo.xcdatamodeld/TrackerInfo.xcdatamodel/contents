@@ -10,7 +10,7 @@
         <attribute name="createdAt" optional="YES" attributeType="Date" usesScalarValueType="NO"/>
         <attribute name="emoji" optional="YES" attributeType="String"/>
         <attribute name="id" optional="YES" attributeType="UUID" usesScalarValueType="NO"/>
-        <attribute name="schedule" optional="YES" attributeType="Transformable" valueTransformerName="ScheduleTransformer"/>
+        <attribute name="schedule" optional="YES" attributeType="Binary" valueTransformerName="ScheduleTransformer"/>
         <attribute name="title" optional="YES" attributeType="String"/>
         <relationship name="category" optional="YES" maxCount="1" deletionRule="Nullify" destinationEntity="CategoryEntity" inverseName="trackers" inverseEntity="CategoryEntity"/>
     </entity>
