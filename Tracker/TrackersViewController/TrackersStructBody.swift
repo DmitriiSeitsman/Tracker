@@ -7,6 +7,7 @@ struct Tracker: Equatable, Hashable {
     let emoji: String
     let schedule: Set<Weekday>
     let categoryName: String?
+    let createdAt: Date
     
     enum Weekday: Int, CaseIterable {
         case monday = 1, tuesday, wednesday, thursday, friday, saturday, sunday
@@ -28,8 +29,8 @@ struct TrackerCategory: Hashable {
 
 
 struct TrackerRecord: Equatable, Hashable {
-    let id: UUID      // ID трекера
-    let date: Date    // дата выполнения
+    let id: UUID
+    let date: Date
 }
 
 extension Tracker.Weekday {

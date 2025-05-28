@@ -2,6 +2,7 @@ import UIKit
 import CoreData
 
 final class NewHabitViewController: UIViewController {
+    var currentDate = Date()
     
     // MARK: - Data Sources
     
@@ -325,11 +326,16 @@ final class NewHabitViewController: UIViewController {
                 title: name,
                 color: colors[selectedColorIndex.item],
                 emoji: emojis[selectedEmojiIndex.item],
-                schedule: selectedWeekdays, categoryName: selectedCategory.name
+                schedule: selectedWeekdays, categoryName: selectedCategory.name,
+                createdAt: currentDate
             )
             print("✅ Сохраняем трекер в категорию:", selectedCategory.name ?? "nil")
             
-            TrackerStore.shared.addTracker(tracker, categoryTitle: selectedCategory.name ?? "Без категории")
+            TrackerStore.shared.addTracker(
+                tracker,
+                categoryTitle: selectedCategory.name ?? "Без категории",
+                createdAt: Date()
+            )
             
             presentingViewController?.presentingViewController?.dismiss(animated: true)
         }
