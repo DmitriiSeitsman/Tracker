@@ -77,8 +77,6 @@ final class CategoryViewController: UIViewController {
         view.backgroundColor = .ypWhite
         setupLayout()
         addButton.addTarget(self, action: #selector(addButtonTapped), for: .touchUpInside)
-
-        resetCategorySelection()
     }
 
 
@@ -125,15 +123,6 @@ final class CategoryViewController: UIViewController {
     }
 
     // MARK: - Helpers
-    private func resetCategorySelection() {
-        let request: NSFetchRequest<CategoryEntity> = CategoryEntity.fetchRequest()
-        if let all = try? CoreDataManager.shared.context.fetch(request) {
-            for category in all {
-                category.isSelected = false
-            }
-            CoreDataManager.shared.saveContext()
-        }
-    }
 
     private func fetchCategories() {
         let request: NSFetchRequest<CategoryEntity> = CategoryEntity.fetchRequest()
@@ -224,7 +213,18 @@ final class CategoryViewController: UIViewController {
         fetchCategories()
 
         delegate?.didSelectCategory(categories[index])
-        navigationController?.popViewController(animated: true)
+        
+        if let navigationController = self.navigationController {
+               if navigationController.viewControllers.first == self {
+                   // Мы в navigationController, но первый — значит показан модально
+                   dismiss(animated: true)
+               } else {
+                   navigationController.popViewController(animated: true)
+               }
+           } else {
+               dismiss(animated: true)
+           }
+
     }
 
 

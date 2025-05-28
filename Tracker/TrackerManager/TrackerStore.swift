@@ -26,7 +26,7 @@ final class TrackerStore {
         let rawValues = tracker.schedule.map { $0.rawValue }
         do {
             let data = try NSKeyedArchiver.archivedData(withRootObject: rawValues, requiringSecureCoding: true)
-            entity.schedule = data as NSData
+            entity.schedule = data
         } catch {
             print("❌ Не удалось сохранить schedule: \(error)")
         }
@@ -74,19 +74,53 @@ final class TrackerStore {
 
 extension TrackerEntity {
     func toTracker() -> Tracker? {
-        guard let id,
-              let title,
-              let emoji,
-              let colorHex,
-              let categoryName = category?.name,
-              let createdAt,
-              let data = schedule as? Data,
-              let raw = try? NSKeyedUnarchiver.unarchivedObject(ofClasses: [NSArray.self, NSNumber.self], from: data) as? [Int]
-        else {
+        guard let id else {
+            print("❌ Не удалось получить id")
             return nil
         }
 
-        let scheduleSet = Set(raw.compactMap { Tracker.Weekday(rawValue: $0) })
+        guard let title else {
+            print("❌ Не удалось получить title")
+            return nil
+        }
+
+        guard let emoji else {
+            print("❌ Не удалось получить emoji")
+            return nil
+        }
+
+        guard let colorHex else {
+            print("❌ Не удалось получить colorHex")
+            return nil
+        }
+
+        guard let categoryName = category?.name else {
+            print("❌ Не удалось получить имя категории")
+            return nil
+        }
+
+        guard let createdAt else {
+            print("❌ Не удалось получить createdAt")
+            return nil
+        }
+
+        let scheduleSet: Set<Tracker.Weekday> = {
+            guard let data = schedule else {
+                print("⚠️ schedule не является Data")
+                return []
+            }
+
+
+            guard let raw = try? NSKeyedUnarchiver.unarchivedObject(
+                ofClasses: [NSArray.self, NSNumber.self],
+                from: data
+            ) as? [Int] else {
+                print("⚠️ Не удалось декодировать schedule")
+                return []
+            }
+
+            return Set(raw.compactMap { Tracker.Weekday(rawValue: $0) })
+        }()
 
         return Tracker(
             id: id,
@@ -98,6 +132,7 @@ extension TrackerEntity {
             createdAt: createdAt
         )
     }
+
 }
 
 extension UIColor {

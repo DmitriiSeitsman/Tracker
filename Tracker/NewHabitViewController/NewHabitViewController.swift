@@ -547,32 +547,35 @@ extension NewHabitViewController: DaysSelectionViewControllerDelegate {
     }
     
     private func updateScheduleButtonSubtitle() {
-        let shortNames = selectedWeekdays
-            .sorted { $0.rawValue < $1.rawValue }
-            .map { $0.shortName }
-            .joined(separator: ", ")
-        
+        let isEveryDay = selectedWeekdays.count == 7
+
+        let subtitle = isEveryDay
+            ? "Каждый день"
+            : selectedWeekdays
+                .sorted { $0.rawValue < $1.rawValue }
+                .map { $0.shortName }
+                .joined(separator: ", ")
+
         let title = "Расписание"
-        let subtitle = shortNames.isEmpty ? "Не выбрано" : shortNames
-        
         let fullText = "\(title)\n\(subtitle)"
         let attributedText = NSMutableAttributedString(string: fullText)
-        
+
         attributedText.addAttribute(.font,
                                     value: UIFont.YPFont(16, weight: .regular),
                                     range: (fullText as NSString).range(of: title))
-        
+
         attributedText.addAttribute(.font,
                                     value: UIFont.YPFont(14, weight: .regular),
                                     range: (fullText as NSString).range(of: subtitle))
-        
+
         attributedText.addAttribute(.foregroundColor,
                                     value: UIColor.ypGray,
                                     range: (fullText as NSString).range(of: subtitle))
-        
+
         scheduleButton.setAttributedTitle(attributedText, for: .normal)
         scheduleButton.titleLabel?.numberOfLines = 2
     }
+
     
 }
 
