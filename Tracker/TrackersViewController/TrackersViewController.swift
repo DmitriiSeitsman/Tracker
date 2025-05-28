@@ -116,7 +116,17 @@ final class TrackersViewController: UIViewController {
         let layout = UICollectionViewFlowLayout()
         layout.scrollDirection = .vertical
         layout.minimumLineSpacing = 12
-        layout.itemSize = CGSize(width: UIScreen.main.bounds.width - 32, height: 80)
+        let itemSpacing: CGFloat = 7
+        let _: CGFloat = 0 // UICollectionView уже встроен в stack с отступом 16
+        let availableWidth = UIScreen.main.bounds.width - 32 // 16 + 16 из stack
+        let totalSpacing = itemSpacing
+        let itemWidth = (availableWidth - totalSpacing) / 2
+
+        layout.itemSize = CGSize(width: itemWidth, height: 90)
+        layout.minimumInteritemSpacing = itemSpacing
+        layout.minimumLineSpacing = 12
+        layout.sectionInset = .zero
+
 
         let collectionView = UICollectionView(frame: .zero, collectionViewLayout: layout)
         collectionView.backgroundColor = .clear
@@ -125,7 +135,11 @@ final class TrackersViewController: UIViewController {
         sectionDataSources.append(dataSource)
         collectionView.dataSource = dataSource
         collectionView.register(TrackerCell.self, forCellWithReuseIdentifier: "TrackerCell")
-        collectionView.heightAnchor.constraint(equalToConstant: CGFloat(trackers.count) * 92).isActive = true
+        let rows = ceil(Double(trackers.count) / 2.0)
+        let rowHeight: CGFloat = 90 + 12 // item height + line spacing
+        let totalHeight = CGFloat(rows) * rowHeight - 12 // убираем последний spacing
+        collectionView.heightAnchor.constraint(equalToConstant: totalHeight).isActive = true
+
         
 
         sectionStack.addArrangedSubview(titleLabel)
@@ -147,6 +161,13 @@ final class TrackersViewController: UIViewController {
         titleLabel.font = .YPFont(34, weight: .bold)
         titleLabel.translatesAutoresizingMaskIntoConstraints = false
         view.addSubview(titleLabel)
+        
+        // Поле поиска
+        searchBar.placeholder = "Поиск"
+        searchBar.searchBarStyle = .minimal
+        searchBar.translatesAutoresizingMaskIntoConstraints = false
+        searchBar.heightAnchor.constraint(equalToConstant: 36).isActive = true
+        view.addSubview(searchBar)
 
         // ScrollView
         scrollView.translatesAutoresizingMaskIntoConstraints = false
@@ -157,11 +178,6 @@ final class TrackersViewController: UIViewController {
         contentStack.spacing = 24
         contentStack.translatesAutoresizingMaskIntoConstraints = false
         scrollView.addSubview(contentStack)
-
-        // Поле поиска
-        searchBar.placeholder = "Поиск"
-        searchBar.translatesAutoresizingMaskIntoConstraints = false
-        contentStack.addArrangedSubview(searchBar)
 
         // Заглушка
         placeholderImageView.image = UIImage(resource: .starRing)
@@ -181,9 +197,14 @@ final class TrackersViewController: UIViewController {
             // Заголовок
             titleLabel.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor, constant: 8),
             titleLabel.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 16),
+            
+            // Поиск
+            searchBar.topAnchor.constraint(equalTo: titleLabel.bottomAnchor, constant: 7),
+            searchBar.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 16),
+            searchBar.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -16),
 
             // ScrollView
-            scrollView.topAnchor.constraint(equalTo: titleLabel.bottomAnchor, constant: 8),
+            scrollView.topAnchor.constraint(equalTo: searchBar.bottomAnchor, constant: 8),
             scrollView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
             scrollView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
             scrollView.bottomAnchor.constraint(equalTo: view.bottomAnchor),
