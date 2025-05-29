@@ -16,7 +16,6 @@ final class TrackerCell: UICollectionViewCell {
 
     private let emojiLabel: UILabel = {
         let label = UILabel()
-        //label.font = .systemFont(ofSize: 24)
         label.widthAnchor.constraint(equalToConstant: 22).isActive = true
         label.heightAnchor.constraint(equalToConstant: 16).isActive = true
         label.translatesAutoresizingMaskIntoConstraints = false
@@ -174,7 +173,7 @@ final class TrackerCell: UICollectionViewCell {
             emojiLabel.centerYAnchor.constraint(equalTo: emojiBackgroundView.centerYAnchor),
             
             // Название трекера
-            titleLabel.topAnchor.constraint(equalTo: emojiBackgroundView.bottomAnchor, constant: 0),
+            titleLabel.topAnchor.constraint(equalTo: emojiBackgroundView.bottomAnchor, constant: 8),
             titleLabel.leadingAnchor.constraint(equalTo: topView.leadingAnchor, constant: 12),
             titleLabel.trailingAnchor.constraint(equalTo: topView.trailingAnchor, constant: -12),
             titleLabel.bottomAnchor.constraint(equalTo: topView.bottomAnchor, constant: 12),

@@ -34,6 +34,8 @@ final class TrackerSectionDataSource: NSObject, UICollectionViewDataSource {
         let cell = collectionView.dequeueReusableCell(withReuseIdentifier: TrackerCell.reuseIdentifier, for: indexPath) as! TrackerCell
         cell.configure(with: tracker, completedDays: completedDays, isCompletedToday: isCompletedToday)
         cell.toggleCompletion = toggleHandler
+        
+        
         return cell
     }
 }
