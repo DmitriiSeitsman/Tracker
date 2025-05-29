@@ -8,6 +8,7 @@ struct Tracker: Equatable, Hashable {
     let schedule: Set<Weekday>
     let categoryName: String?
     let createdAt: Date
+    let isPinned: Bool
     
     enum Weekday: Int, CaseIterable {
         case monday = 1, tuesday, wednesday, thursday, friday, saturday, sunday

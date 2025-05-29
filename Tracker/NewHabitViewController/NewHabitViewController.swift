@@ -2,7 +2,12 @@ import UIKit
 import CoreData
 
 final class NewHabitViewController: UIViewController {
+    
     var currentDate = Date()
+    var completedDays: Int?
+    var trackerToEdit: Tracker?
+    weak var delegate: TrackerEditDelegate?
+    
     
     // MARK: - Data Sources
     
@@ -91,6 +96,15 @@ final class NewHabitViewController: UIViewController {
         return label
     }()
     
+    private let daysCounterLabel: UILabel = {
+        let label = UILabel()
+        label.font = .YPFont(32, weight: .bold)
+        label.textAlignment = .center
+        label.textColor = .label
+        label.translatesAutoresizingMaskIntoConstraints = false
+        return label
+    }()
+    
     private let nameTextField: UITextField = {
         let textField = UITextField()
         textField.placeholder = "Введите название трекера"
@@ -169,6 +183,7 @@ final class NewHabitViewController: UIViewController {
     
     override func viewDidLoad() {
         super.viewDidLoad()
+        daysCounterLabel.isHidden = true
         cancelButton.addTarget(self, action: #selector(cancelButtonTapped), for: .touchUpInside)
         createButton.addTarget(self, action: #selector(createButtonTapped), for: .touchUpInside)
         scheduleButton.addTarget(self, action: #selector(scheduleButtonTapped), for: .touchUpInside)
@@ -202,6 +217,7 @@ final class NewHabitViewController: UIViewController {
         nameTextField.delegate = self
         nameTextField.addTarget(self, action: #selector(nameTextChanged), for: .editingChanged)
         updateCreateButtonState()
+        checkEditMode()
         
     }
     
@@ -251,6 +267,8 @@ final class NewHabitViewController: UIViewController {
         
         [
             newHabitLabel,
+            makeSpacer(height: 24),
+            daysCounterLabel,
             makeSpacer(height: 24),
             nameTextField,
             makeSpacer(height: 24),
@@ -307,7 +325,13 @@ final class NewHabitViewController: UIViewController {
     
     @objc private func cancelButtonTapped() {
         AnimationHelper.animateButtonPress(cancelButton) { [weak self] in
-            self?.presentingViewController?.presentingViewController?.dismiss(animated: true)
+            guard let self else { return }
+            
+            if trackerToEdit != nil {
+                self.dismiss(animated: true)
+            } else {
+                self.presentingViewController?.presentingViewController?.dismiss(animated: true)
+            }
         }
     }
     
@@ -321,25 +345,44 @@ final class NewHabitViewController: UIViewController {
                 !selectedWeekdays.isEmpty
             else { return }
             
-            let tracker = Tracker(
-                id: UUID(),
-                title: name,
-                color: colors[selectedColorIndex.item],
-                emoji: emojis[selectedEmojiIndex.item],
-                schedule: selectedWeekdays, categoryName: selectedCategory.name,
-                createdAt: currentDate
-            )
-            print("✅ Сохраняем трекер в категорию:", selectedCategory.name ?? "nil")
+            if let existing = trackerToEdit {
+                let updated = Tracker(
+                    id: existing.id,
+                    title: name,
+                    color: colors[selectedColorIndex.item],
+                    emoji: emojis[selectedEmojiIndex.item],
+                    schedule: selectedWeekdays,
+                    categoryName: selectedCategory.name ?? "",
+                    createdAt: existing.createdAt,
+                    isPinned: existing.isPinned
+                )
+                
+                TrackerStore.shared.updateTracker(updated, categoryTitle: selectedCategory.name ?? "")
+                delegate?.didUpdateTracker(updated)
+            } else {
+                let newTracker = Tracker(
+                    id: UUID(),
+                    title: name,
+                    color: colors[selectedColorIndex.item],
+                    emoji: emojis[selectedEmojiIndex.item],
+                    schedule: selectedWeekdays,
+                    categoryName: selectedCategory.name ?? "",
+                    createdAt: currentDate,
+                    isPinned: false
+                )
+                
+                TrackerStore.shared.addTracker(newTracker, categoryTitle: selectedCategory.name ?? "", createdAt: Date())
+            }
             
-            TrackerStore.shared.addTracker(
-                tracker,
-                categoryTitle: selectedCategory.name ?? "Без категории",
-                createdAt: Date()
-            )
+            if trackerToEdit != nil {
+                self.dismiss(animated: true)
+            } else {
+                self.presentingViewController?.presentingViewController?.dismiss(animated: true)
+            }
             
-            presentingViewController?.presentingViewController?.dismiss(animated: true)
         }
     }
+    
     
     
     @objc private func categoryButtonTapped() {
@@ -365,17 +408,75 @@ final class NewHabitViewController: UIViewController {
         updateCreateButtonState()
     }
     
+    private func checkEditMode() {
+        guard let tracker = trackerToEdit else { return }
+
+        newHabitLabel.text = "Редактировать привычку"
+        nameTextField.text = tracker.title
+
+        if let emojiIndex = emojis.firstIndex(of: tracker.emoji) {
+            selectedEmojiIndex = IndexPath(item: emojiIndex, section: 0)
+        }
+
+        if let colorIndex = colors.firstIndex(where: { hexString(from: $0) == hexString(from: tracker.color) }) {
+            selectedColorIndex = IndexPath(item: colorIndex, section: 0)
+        }
+        
+        if let days = completedDays {
+            daysCounterLabel.text = "\(days) \(daysWord(for: days))"
+            daysCounterLabel.isHidden = false
+        }
+
+        selectedWeekdays = tracker.schedule
+        updateScheduleButtonSubtitle()
+
+        selectedCategory = CoreDataManager.shared.context
+            .registeredObjects
+            .compactMap { $0 as? CategoryEntity }
+            .first { $0.name == tracker.categoryName }
+        updateCategoryButtonSubtitle()
+
+        createButton.setTitle("Сохранить", for: .normal)
+
+        emojiCollectionView.reloadData()
+        colorCollectionView.reloadData()
+    }
+
+    
     func debugPrintAllTrackers() {
         let request: NSFetchRequest<TrackerEntity> = TrackerEntity.fetchRequest()
         let entities = (try? CoreDataManager.shared.context.fetch(request)) ?? []
         
         print("=== Трекеры в базе ===")
-        for t in entities {
-            print("📌 \(t.title ?? "—") | \(t.category?.name ?? "❌ без категории") | \((t.schedule as? [NSNumber])?.map { $0.intValue } ?? [])")
+        for tracker in entities {
+            let title = tracker.title ?? "—"
+            let category = tracker.category?.name ?? "❌ без категории"
             
+            var scheduleText = "—"
+            if let data = tracker.schedule,
+               let rawValues = try? NSKeyedUnarchiver.unarchivedObject(ofClass: NSArray.self, from: data) as? [NSNumber] {
+                
+                let weekdays = rawValues.compactMap { Tracker.Weekday(rawValue: $0.intValue) }
+                let shortNames = weekdays.map { $0.shortName }.joined(separator: ", ")
+                if !shortNames.isEmpty {
+                    scheduleText = shortNames
+                }
+            }
+
+            print("📌 \(title) | \(category) | \(scheduleText)")
         }
     }
     
+    private func hexString(from color: UIColor) -> String {
+        var red: CGFloat = 0, green: CGFloat = 0, blue: CGFloat = 0
+        color.getRed(&red, green: &green, blue: &blue, alpha: nil)
+
+        let r = Int(red * 255)
+        let g = Int(green * 255)
+        let b = Int(blue * 255)
+
+        return String(format: "#%02X%02X%02X", r, g, b)
+    }
     
     private func presentDaysSelection() {
         let vc = DaysSelectionViewController()
@@ -456,12 +557,15 @@ extension NewHabitViewController: UICollectionViewDataSource, UICollectionViewDe
     func collectionView(_ collectionView: UICollectionView, didSelectItemAt indexPath: IndexPath) {
         if collectionView == emojiCollectionView {
             selectedEmojiIndex = indexPath
-        } else {
+            emojiCollectionView.reloadData()
+        } else if collectionView == colorCollectionView {
             selectedColorIndex = indexPath
+            colorCollectionView.reloadData()
         }
-        collectionView.reloadData()
+        
         updateCreateButtonState()
     }
+
 }
 
 // MARK: - EmojiCell
@@ -499,19 +603,70 @@ final class EmojiCell: UICollectionViewCell {
 final class ColorCell: UICollectionViewCell {
     static let reuseIdentifier = "ColorCell"
     
+    private let whiteBackgroundView: UIView = {
+        let view = UIView()
+        view.translatesAutoresizingMaskIntoConstraints = false
+        view.backgroundColor = .white
+        view.layer.cornerRadius = 8
+        view.layer.masksToBounds = true
+        return view
+    }()
+    
+    private let colorCircleView: UIView = {
+        let view = UIView()
+        view.translatesAutoresizingMaskIntoConstraints = false
+        view.layer.cornerRadius = 8
+        view.layer.masksToBounds = true
+        return view
+    }()
+    
     override init(frame: CGRect) {
         super.init(frame: frame)
-        contentView.layer.cornerRadius = 16
+        setupViews()
     }
-    
+
+    required init?(coder: NSCoder) {
+        fatalError("init(coder:) has not been implemented")
+    }
+
+    private func setupViews() {
+        contentView.addSubview(whiteBackgroundView)
+        whiteBackgroundView.addSubview(colorCircleView)
+
+        NSLayoutConstraint.activate([
+            whiteBackgroundView.centerXAnchor.constraint(equalTo: contentView.centerXAnchor),
+            whiteBackgroundView.centerYAnchor.constraint(equalTo: contentView.centerYAnchor),
+            whiteBackgroundView.widthAnchor.constraint(equalToConstant: 46),
+            whiteBackgroundView.heightAnchor.constraint(equalToConstant: 46),
+            
+            colorCircleView.centerXAnchor.constraint(equalTo: whiteBackgroundView.centerXAnchor),
+            colorCircleView.centerYAnchor.constraint(equalTo: whiteBackgroundView.centerYAnchor),
+            colorCircleView.widthAnchor.constraint(equalToConstant: 40),
+            colorCircleView.heightAnchor.constraint(equalToConstant: 40)
+        ])
+    }
+
+    override func prepareForReuse() {
+        super.prepareForReuse()
+        whiteBackgroundView.layer.borderWidth = 0
+        whiteBackgroundView.layer.borderColor = UIColor.clear.cgColor
+    }
+
     func configure(with color: UIColor, selected: Bool) {
-        contentView.backgroundColor = color
-        contentView.layer.borderWidth = selected ? 3 : 0
-        contentView.layer.borderColor = selected ? UIColor.black.cgColor : nil
+        colorCircleView.backgroundColor = color
+        
+        if selected {
+            whiteBackgroundView.layer.borderWidth = 3
+            whiteBackgroundView.layer.borderColor = color.withAlphaComponent(0.3).cgColor
+        } else {
+            whiteBackgroundView.layer.borderWidth = 0
+            whiteBackgroundView.layer.borderColor = UIColor.clear.cgColor
+        }
     }
-    
-    required init?(coder: NSCoder) { fatalError("init(coder:) has not been implemented") }
 }
+
+
+
 // MARK: - Extensions
 
 extension NewHabitViewController: UITextFieldDelegate {
@@ -548,34 +703,34 @@ extension NewHabitViewController: DaysSelectionViewControllerDelegate {
     
     private func updateScheduleButtonSubtitle() {
         let isEveryDay = selectedWeekdays.count == 7
-
+        
         let subtitle = isEveryDay
-            ? "Каждый день"
-            : selectedWeekdays
-                .sorted { $0.rawValue < $1.rawValue }
-                .map { $0.shortName }
-                .joined(separator: ", ")
-
+        ? "Каждый день"
+        : selectedWeekdays
+            .sorted { $0.rawValue < $1.rawValue }
+            .map { $0.shortName }
+            .joined(separator: ", ")
+        
         let title = "Расписание"
         let fullText = "\(title)\n\(subtitle)"
         let attributedText = NSMutableAttributedString(string: fullText)
-
+        
         attributedText.addAttribute(.font,
                                     value: UIFont.YPFont(16, weight: .regular),
                                     range: (fullText as NSString).range(of: title))
-
+        
         attributedText.addAttribute(.font,
                                     value: UIFont.YPFont(14, weight: .regular),
                                     range: (fullText as NSString).range(of: subtitle))
-
+        
         attributedText.addAttribute(.foregroundColor,
                                     value: UIColor.ypGray,
                                     range: (fullText as NSString).range(of: subtitle))
-
+        
         scheduleButton.setAttributedTitle(attributedText, for: .normal)
         scheduleButton.titleLabel?.numberOfLines = 2
     }
-
+    
     
 }
 

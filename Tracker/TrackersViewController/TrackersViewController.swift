@@ -1,5 +1,9 @@
 import UIKit
 
+protocol TrackerEditDelegate: AnyObject {
+    func didUpdateTracker(_ tracker: Tracker)
+}
+
 final class TrackersViewController: UIViewController {
     
     var categories: [TrackerCategory] = []
@@ -129,15 +133,38 @@ final class TrackersViewController: UIViewController {
         placeholderLabel.isHidden = !filtered.isEmpty
         
         for category in filtered {
-            let sectionView = makeCategorySection(title: category.title, trackers: category.trackers)
+            let sectionView = makeCategorySection(
+                title: category.title,
+                trackers: category.trackers,
+                delegate: self
+            )
+            
             contentStack.addArrangedSubview(sectionView)
+        }
+        updateFiltersButtonVisibility(with: filtered)
+    }
+    
+    private func presentEdit(for tracker: Tracker, completedDays: Int) {
+        let isUnscheduled = tracker.schedule.isEmpty
+        
+        if isUnscheduled {
+            let vc = UnscheduledViewController()
+            vc.trackerToEdit = tracker
+            vc.delegate = self
+            vc.modalPresentationStyle = .fullScreen
+            present(vc, animated: true)
+        } else {
+            let vc = NewHabitViewController()
+            vc.trackerToEdit = tracker
+            vc.completedDays = completedDays
+            vc.delegate = self
+            vc.modalPresentationStyle = .fullScreen
+            present(vc, animated: true)
         }
     }
     
     
-    
-    
-    private func makeCategorySection(title: String, trackers: [Tracker]) -> UIView {
+    private func makeCategorySection(title: String, trackers: [Tracker], delegate: TrackerCellDelegate) -> UIView {
         let sectionStack = UIStackView()
         sectionStack.axis = .vertical
         sectionStack.spacing = 12
@@ -169,27 +196,29 @@ final class TrackersViewController: UIViewController {
         let dataSource = TrackerSectionDataSource(
             trackers: trackers,
             completedTrackers: completedTrackers,
-            currentDate: currentDate
-        ) { [weak self] tracker, currentlyCompleted in
-            guard let self = self else { return }
-            
-            let calendar = Calendar.current
-            let today = calendar.startOfDay(for: Date())
-            let selectedDay = calendar.startOfDay(for: self.currentDate)
-            
-            guard selectedDay <= today else {
-                print("Нельзя отмечать трекеры на будущую дату: \(selectedDay)")
-                return
-            }
-            
-            if currentlyCompleted {
-                TrackerRecordStore.shared.removeRecord(for: tracker.id, on: selectedDay)
-            } else {
-                TrackerRecordStore.shared.addRecord(for: tracker.id, on: selectedDay)
-            }
-            
-            self.reloadContent()
-        }
+            currentDate: currentDate,
+            toggleHandler: { [weak self] tracker, currentlyCompleted in
+                guard let self = self else { return }
+                
+                let calendar = Calendar.current
+                let today = calendar.startOfDay(for: Date())
+                let selectedDay = calendar.startOfDay(for: self.currentDate)
+                
+                guard selectedDay <= today else {
+                    print("Нельзя отмечать трекеры на будущую дату: \(selectedDay)")
+                    return
+                }
+                
+                if currentlyCompleted {
+                    TrackerRecordStore.shared.removeRecord(for: tracker.id, on: selectedDay)
+                } else {
+                    TrackerRecordStore.shared.addRecord(for: tracker.id, on: selectedDay)
+                }
+                
+                self.reloadContent()
+            },
+            delegate: delegate // 👈 обязательно
+        )
         
         sectionDataSources.append(dataSource)
         collectionView.dataSource = dataSource
@@ -206,6 +235,7 @@ final class TrackersViewController: UIViewController {
         
         return sectionStack
     }
+    
     
     
     
@@ -252,6 +282,10 @@ final class TrackersViewController: UIViewController {
         scrollView.addSubview(placeholderLabel)
     }
     
+    private func updateFiltersButtonVisibility(with filteredCategories: [TrackerCategory]) {
+        let hasAnyTrackers = filteredCategories.flatMap { $0.trackers }.count > 0
+        filtersButton.isHidden = !hasAnyTrackers
+    }
     
     private func setupConstraints() {
         NSLayoutConstraint.activate([
@@ -308,4 +342,40 @@ extension TrackersViewController: FilterSelectionDelegate {
     }
 }
 
+extension TrackersViewController: TrackerEditDelegate {
+    func didUpdateTracker(_ tracker: Tracker) {
+        TrackerStore.shared.updateTracker(tracker, categoryTitle: tracker.categoryName ?? "")
+        categories = TrackerStore.shared.fetchAllCategories()
+        reloadContent()
+    }
+}
+
+extension TrackersViewController: TrackerCellDelegate {
+    func didTogglePin(for tracker: Tracker?) {
+        guard let tracker = tracker else { return }
+        TrackerStore.shared.togglePin(for: tracker)
+        categories = TrackerStore.shared.fetchAllCategories()
+        reloadContent()
+    }
+    
+    func didRequestEdit(for tracker: Tracker?) {
+        guard let tracker = tracker else { return }
+        let completedDays = completedTrackers.filter { $0.id == tracker.id }.count
+        presentEdit(for: tracker, completedDays: completedDays)
+    }
+    
+    func didRequestDelete(for tracker: Tracker?) {
+        guard let tracker = tracker else { return }
+        let alert = UIAlertController(title: "Удалить трекер", message: "Вы уверены, что хотите удалить этот трекер?", preferredStyle: .actionSheet)
+        
+        alert.addAction(UIAlertAction(title: "Удалить", style: .destructive, handler: { _ in
+            TrackerStore.shared.deleteTracker(tracker)
+            self.categories = TrackerStore.shared.fetchAllCategories()
+            self.reloadContent()
+        }))
+        
+        alert.addAction(UIAlertAction(title: "Отмена", style: .cancel))
+        present(alert, animated: true)
+    }
+}
 

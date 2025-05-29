@@ -4,6 +4,8 @@ import CoreData
 final class UnscheduledViewController: UIViewController {
     
     var currentDate: Date = Date()
+    var trackerToEdit: Tracker?
+    weak var delegate: TrackerEditDelegate?
     
     // MARK: - Data Sources
     
@@ -321,7 +323,8 @@ final class UnscheduledViewController: UIViewController {
                 emoji: emojis[selectedEmojiIndex.item],
                 schedule: [],
                 categoryName: selectedCategory.name,
-                createdAt: currentDate
+                createdAt: currentDate,
+                isPinned: false
             )
 
             print("Сохраняем трекер в категорию:", selectedCategory.name ?? "nil")

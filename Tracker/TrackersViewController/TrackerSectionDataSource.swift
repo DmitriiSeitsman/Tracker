@@ -5,17 +5,20 @@ final class TrackerSectionDataSource: NSObject, UICollectionViewDataSource {
     private let completedTrackers: [TrackerRecord]
     private let currentDate: Date
     private let toggleHandler: (Tracker, Bool) -> Void
+    private weak var delegate: TrackerCellDelegate?
 
     init(
         trackers: [Tracker],
         completedTrackers: [TrackerRecord],
         currentDate: Date,
-        toggleHandler: @escaping (Tracker, Bool) -> Void
+        toggleHandler: @escaping (Tracker, Bool) -> Void,
+        delegate: TrackerCellDelegate
     ) {
         self.trackers = trackers
         self.completedTrackers = completedTrackers
         self.currentDate = currentDate
         self.toggleHandler = toggleHandler
+        self.delegate = delegate
     }
 
     func collectionView(_ collectionView: UICollectionView, numberOfItemsInSection section: Int) -> Int {
@@ -34,8 +37,8 @@ final class TrackerSectionDataSource: NSObject, UICollectionViewDataSource {
         let cell = collectionView.dequeueReusableCell(withReuseIdentifier: TrackerCell.reuseIdentifier, for: indexPath) as! TrackerCell
         cell.configure(with: tracker, completedDays: completedDays, isCompletedToday: isCompletedToday)
         cell.toggleCompletion = toggleHandler
-        
-        
+        cell.delegate = delegate // ✅ устанавливаем делегат
+
         return cell
     }
 }
