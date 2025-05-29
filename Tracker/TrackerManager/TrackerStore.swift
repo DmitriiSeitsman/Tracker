@@ -20,9 +20,8 @@ final class TrackerStore {
         entity.title = tracker.title
         entity.emoji = tracker.emoji
         entity.colorHex = tracker.color.toHexString()
-        entity.createdAt = createdAt // 👈 вот это
+        entity.createdAt = createdAt
 
-        // сериализуем пустой schedule как []
         let rawValues = tracker.schedule.map { $0.rawValue }
         do {
             let data = try NSKeyedArchiver.archivedData(withRootObject: rawValues, requiringSecureCoding: true)
@@ -32,10 +31,56 @@ final class TrackerStore {
         }
 
         entity.category = category
-
         CoreDataManager.shared.saveContext()
     }
 
+    // MARK: - Update Tracker
+
+    func updateTracker(_ tracker: Tracker, categoryTitle: String) {
+        guard let entity = fetchTrackerEntity(by: tracker.id),
+              let category = fetchCategoryEntity(by: categoryTitle) else {
+            print("❌ Не удалось найти трекер или категорию для обновления")
+            return
+        }
+
+        entity.title = tracker.title
+        entity.emoji = tracker.emoji
+        entity.colorHex = tracker.color.toHexString()
+        entity.createdAt = tracker.createdAt
+        entity.isPinned = tracker.isPinned
+
+        let rawValues = tracker.schedule.map { $0.rawValue }
+        do {
+            let data = try NSKeyedArchiver.archivedData(withRootObject: rawValues, requiringSecureCoding: true)
+            entity.schedule = data
+        } catch {
+            print("❌ Ошибка при сохранении расписания: \(error)")
+        }
+
+        entity.category = category
+        CoreDataManager.shared.saveContext()
+    }
+
+
+    func togglePin(for tracker: Tracker) {
+        if let entity = fetchTrackerEntity(by: tracker.id) {
+            entity.isPinned.toggle()
+            CoreDataManager.shared.saveContext()
+        }
+    }
+
+    func deleteTracker(_ tracker: Tracker) {
+        if let entity = fetchTrackerEntity(by: tracker.id) {
+            print("🗑 Удаляем трекер: \(entity.title ?? "")")
+            print("📦 У него записей: \(entity.records?.count ?? 0)")
+            context.delete(entity)
+            CoreDataManager.shared.saveContext()
+
+            // Проверим, всё ли удалилось
+            let остались = TrackerRecordStore.shared.fetchAllRecords().filter { $0.id == tracker.id }
+            print("🔍 Осталось записей с таким id: \(остались.count)")
+        }
+    }
 
     // MARK: - Fetch Trackers
 
@@ -50,77 +95,67 @@ final class TrackerStore {
         let request: NSFetchRequest<CategoryEntity> = CategoryEntity.fetchRequest()
         let categoryEntities = (try? context.fetch(request)) ?? []
 
-        print("📦 Загруженные категории: \(categoryEntities.count)")
-
         return categoryEntities.map { categoryEntity in
             let trackers = (categoryEntity.trackers?.allObjects as? [TrackerEntity] ?? [])
                 .compactMap { $0.toTracker() }
-
-            print("📂 \(categoryEntity.name ?? "Без имени"): \(trackers.count) трекеров")
 
             return TrackerCategory(title: categoryEntity.name ?? "Без имени", trackers: trackers)
         }
     }
 
     // MARK: - Helpers
+    
+    func fetchTrackerEntity(by id: UUID) -> TrackerEntity? {
+        let request: NSFetchRequest<TrackerEntity> = TrackerEntity.fetchRequest()
+        request.predicate = NSPredicate(format: "id == %@", id as CVarArg)
+        return try? context.fetch(request).first
+    }
 
     private func fetchCategoryEntity(by title: String) -> CategoryEntity? {
         let request: NSFetchRequest<CategoryEntity> = CategoryEntity.fetchRequest()
         request.predicate = NSPredicate(format: "name == %@", title)
         return try? context.fetch(request).first
     }
+    
 }
-
 
 extension TrackerEntity {
     func toTracker() -> Tracker? {
-        guard let id else {
-            print("❌ Не удалось получить id")
+        guard let id = self.id else {
+            print("❌ TrackerEntity: id отсутствует")
+            return nil
+        }
+        guard let title = self.title else {
+            print("❌ TrackerEntity: title отсутствует")
+            return nil
+        }
+        guard let emoji = self.emoji else {
+            print("❌ TrackerEntity: emoji отсутствует")
+            return nil
+        }
+        guard let colorHex = self.colorHex else {
+            print("❌ TrackerEntity: colorHex отсутствует")
+            return nil
+        }
+        guard let categoryName = self.category?.name else {
+            print("❌ TrackerEntity: категория отсутствует")
+            return nil
+        }
+        guard let createdAt = self.createdAt else {
+            print("❌ TrackerEntity: createdAt отсутствует")
             return nil
         }
 
-        guard let title else {
-            print("❌ Не удалось получить title")
-            return nil
-        }
-
-        guard let emoji else {
-            print("❌ Не удалось получить emoji")
-            return nil
-        }
-
-        guard let colorHex else {
-            print("❌ Не удалось получить colorHex")
-            return nil
-        }
-
-        guard let categoryName = category?.name else {
-            print("❌ Не удалось получить имя категории")
-            return nil
-        }
-
-        guard let createdAt else {
-            print("❌ Не удалось получить createdAt")
-            return nil
-        }
-
-        let scheduleSet: Set<Tracker.Weekday> = {
-            guard let data = schedule else {
-                print("⚠️ schedule не является Data")
-                return []
-            }
-
-
-            guard let raw = try? NSKeyedUnarchiver.unarchivedObject(
+        // Распаковка schedule
+        var scheduleSet = Set<Tracker.Weekday>()
+        if let data = self.schedule {
+            if let raw = try? NSKeyedUnarchiver.unarchivedObject(
                 ofClasses: [NSArray.self, NSNumber.self],
                 from: data
-            ) as? [Int] else {
-                print("⚠️ Не удалось декодировать schedule")
-                return []
+            ) as? [Int] {
+                scheduleSet = Set(raw.compactMap { Tracker.Weekday(rawValue: $0) })
             }
-
-            return Set(raw.compactMap { Tracker.Weekday(rawValue: $0) })
-        }()
+        }
 
         return Tracker(
             id: id,
@@ -129,11 +164,12 @@ extension TrackerEntity {
             emoji: emoji,
             schedule: scheduleSet,
             categoryName: categoryName,
-            createdAt: createdAt
+            createdAt: createdAt,
+            isPinned: self.isPinned
         )
     }
-
 }
+
 
 extension UIColor {
     func toHexString() -> String {

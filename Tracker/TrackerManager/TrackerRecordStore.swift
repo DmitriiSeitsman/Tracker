@@ -12,6 +12,14 @@ final class TrackerRecordStore {
         let entity = TrackerRecordEntity(context: context)
         entity.id = id
         entity.date = date
+        
+        // Устанавливаем связь с TrackerEntity
+        if let trackerEntity = TrackerStore.shared.fetchTrackerEntity(by: id) {
+            entity.tracker = trackerEntity
+        } else {
+            print("❌ Не удалось найти TrackerEntity для установки связи")
+        }
+
         CoreDataManager.shared.saveContext()
     }
 
