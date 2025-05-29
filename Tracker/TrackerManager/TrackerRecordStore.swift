@@ -8,11 +8,34 @@ final class TrackerRecordStore {
 
     // MARK: - Add Record
 
-    func addRecord(_ record: TrackerRecord) {
+    func addRecord(for id: UUID, on date: Date) {
         let entity = TrackerRecordEntity(context: context)
-        entity.id = record.id
-        entity.date = record.date
+        entity.id = id
+        entity.date = date
         CoreDataManager.shared.saveContext()
+    }
+
+    func addRecord(_ record: TrackerRecord) {
+        addRecord(for: record.id, on: record.date)
+    }
+
+    // MARK: - Remove Record
+
+    func removeRecord(for id: UUID, on date: Date) {
+        let request: NSFetchRequest<TrackerRecordEntity> = TrackerRecordEntity.fetchRequest()
+        request.predicate = NSCompoundPredicate(andPredicateWithSubpredicates: [
+            NSPredicate(format: "id == %@", id as CVarArg),
+            NSPredicate(format: "date == %@", date as CVarArg)
+        ])
+
+        if let result = try? context.fetch(request), let entity = result.first {
+            context.delete(entity)
+            CoreDataManager.shared.saveContext()
+        }
+    }
+
+    func deleteRecord(_ record: TrackerRecord) {
+        removeRecord(for: record.id, on: record.date)
     }
 
     // MARK: - Fetch Records
@@ -37,17 +60,5 @@ final class TrackerRecordStore {
         let result = try? context.fetch(request)
         return result?.isEmpty == false
     }
-
-    func deleteRecord(_ record: TrackerRecord) {
-        let request: NSFetchRequest<TrackerRecordEntity> = TrackerRecordEntity.fetchRequest()
-        request.predicate = NSCompoundPredicate(andPredicateWithSubpredicates: [
-            NSPredicate(format: "id == %@", record.id as CVarArg),
-            NSPredicate(format: "date == %@", record.date as CVarArg)
-        ])
-
-        if let result = try? context.fetch(request), let entity = result.first {
-            context.delete(entity)
-            CoreDataManager.shared.saveContext()
-        }
-    }
 }
+

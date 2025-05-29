@@ -6,6 +6,7 @@ final class TrackersViewController: UIViewController {
     var currentDate: Date = Date()
     
     private var sectionDataSources: [UICollectionViewDataSource] = []
+    private var completedTrackers: [TrackerRecord] = []
 
     private let scrollView = UIScrollView()
     private let contentStack = UIStackView()
@@ -71,6 +72,7 @@ final class TrackersViewController: UIViewController {
         let adjustedWeekday = (systemWeekday + 5) % 7 + 1
 
         guard let selectedWeekday = Tracker.Weekday(rawValue: adjustedWeekday) else { return }
+        completedTrackers = TrackerRecordStore.shared.fetchAllRecords()
 
         // Фильтруем трекеры:
         // - регулярные: если они содержат выбранный день недели
@@ -116,37 +118,52 @@ final class TrackersViewController: UIViewController {
         let layout = UICollectionViewFlowLayout()
         layout.scrollDirection = .vertical
         layout.minimumLineSpacing = 12
-        let itemSpacing: CGFloat = 7
-        let _: CGFloat = 0 // UICollectionView уже встроен в stack с отступом 16
-        let availableWidth = UIScreen.main.bounds.width - 32 // 16 + 16 из stack
-        let totalSpacing = itemSpacing
-        let itemWidth = (availableWidth - totalSpacing) / 2
-
-        layout.itemSize = CGSize(width: itemWidth, height: 90)
-        layout.minimumInteritemSpacing = itemSpacing
-        layout.minimumLineSpacing = 12
+        layout.minimumInteritemSpacing = 7
         layout.sectionInset = .zero
 
+        let availableWidth = UIScreen.main.bounds.width - 32
+        let itemSpacing: CGFloat = layout.minimumInteritemSpacing
+        let itemWidth = (availableWidth - itemSpacing) / 2
+
+        let itemHeight: CGFloat = 148
+        layout.itemSize = CGSize(width: itemWidth, height: itemHeight)
 
         let collectionView = UICollectionView(frame: .zero, collectionViewLayout: layout)
         collectionView.backgroundColor = .clear
         collectionView.isScrollEnabled = false
-        let dataSource = TrackerSectionDataSource(trackers: trackers)
+
+        let dataSource = TrackerSectionDataSource(
+            trackers: trackers,
+            completedTrackers: completedTrackers,
+            currentDate: currentDate
+        ) { [weak self] tracker, currentlyCompleted in
+            guard let self = self else { return }
+
+            if currentlyCompleted {
+                TrackerRecordStore.shared.removeRecord(for: tracker.id, on: self.currentDate)
+            } else {
+                TrackerRecordStore.shared.addRecord(for: tracker.id, on: self.currentDate)
+            }
+
+            self.reloadContent()
+        }
+
         sectionDataSources.append(dataSource)
         collectionView.dataSource = dataSource
         collectionView.register(TrackerCell.self, forCellWithReuseIdentifier: "TrackerCell")
-        let rows = ceil(Double(trackers.count) / 2.0)
-        let rowHeight: CGFloat = 90 + 12 // item height + line spacing
-        let totalHeight = CGFloat(rows) * rowHeight - 12 // убираем последний spacing
-        collectionView.heightAnchor.constraint(equalToConstant: totalHeight).isActive = true
 
-        
+        // Расчёт количества строк
+        let rows = ceil(Double(trackers.count) / 2.0)
+        let rowHeight = itemHeight + layout.minimumLineSpacing
+        let totalHeight = CGFloat(rows) * rowHeight - layout.minimumLineSpacing
+        collectionView.heightAnchor.constraint(equalToConstant: totalHeight).isActive = true
 
         sectionStack.addArrangedSubview(titleLabel)
         sectionStack.addArrangedSubview(collectionView)
 
         return sectionStack
     }
+
 
     @objc private func didTapAdd() {
         let vc = TrackerTypeViewController()
