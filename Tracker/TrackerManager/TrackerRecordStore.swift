@@ -22,10 +22,15 @@ final class TrackerRecordStore {
     // MARK: - Remove Record
 
     func removeRecord(for id: UUID, on date: Date) {
+        let calendar = Calendar.current
+        let startOfDay = calendar.startOfDay(for: date)
+
+        let nextDay = calendar.date(byAdding: .day, value: 1, to: startOfDay)!
+
         let request: NSFetchRequest<TrackerRecordEntity> = TrackerRecordEntity.fetchRequest()
         request.predicate = NSCompoundPredicate(andPredicateWithSubpredicates: [
             NSPredicate(format: "id == %@", id as CVarArg),
-            NSPredicate(format: "date == %@", date as CVarArg)
+            NSPredicate(format: "date >= %@ AND date < %@", startOfDay as CVarArg, nextDay as CVarArg)
         ])
 
         if let result = try? context.fetch(request), let entity = result.first {
@@ -33,6 +38,7 @@ final class TrackerRecordStore {
             CoreDataManager.shared.saveContext()
         }
     }
+
 
     func deleteRecord(_ record: TrackerRecord) {
         removeRecord(for: record.id, on: record.date)
