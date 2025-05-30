@@ -96,6 +96,18 @@ final class NewHabitViewController: UIViewController {
         return label
     }()
     
+    private let errorLabel: UILabel = {
+        let label = UILabel()
+        label.textColor = .ypRed
+        label.font = .YPFont(17, weight: .regular)
+        label.textAlignment = .center
+        label.numberOfLines = 0
+        label.isHidden = true
+        label.translatesAutoresizingMaskIntoConstraints = false
+        return label
+    }()
+
+    
     private let daysCounterLabel: UILabel = {
         let label = UILabel()
         label.font = .YPFont(32, weight: .bold)
@@ -271,6 +283,7 @@ final class NewHabitViewController: UIViewController {
             daysCounterLabel,
             makeSpacer(height: 24),
             nameTextField,
+            errorLabel,
             makeSpacer(height: 24),
             buttonsWrapperView,
             makeSpacer(height: 32),
@@ -408,6 +421,22 @@ final class NewHabitViewController: UIViewController {
         updateCreateButtonState()
     }
     
+    private func showError(_ message: String) {
+        errorLabel.text = message
+        errorLabel.isHidden = false
+        NSLayoutConstraint.activate([
+            errorLabel.topAnchor.constraint(equalTo: nameTextField.bottomAnchor, constant: 8),
+            ])
+        nameTextField.layer.borderColor = UIColor.systemRed.cgColor
+        nameTextField.layer.borderWidth = 1
+    }
+
+    private func hideError() {
+        errorLabel.isHidden = true
+        errorLabel.text = nil
+        nameTextField.layer.borderWidth = 0
+    }
+    
     private func checkEditMode() {
         guard let tracker = trackerToEdit else { return }
 
@@ -440,42 +469,6 @@ final class NewHabitViewController: UIViewController {
 
         emojiCollectionView.reloadData()
         colorCollectionView.reloadData()
-    }
-
-    
-    func debugPrintAllTrackers() {
-        let request: NSFetchRequest<TrackerEntity> = TrackerEntity.fetchRequest()
-        let entities = (try? CoreDataManager.shared.context.fetch(request)) ?? []
-        
-        print("=== Трекеры в базе ===")
-        for tracker in entities {
-            let title = tracker.title ?? "—"
-            let category = tracker.category?.name ?? "❌ без категории"
-            
-            var scheduleText = "—"
-            if let data = tracker.schedule,
-               let rawValues = try? NSKeyedUnarchiver.unarchivedObject(ofClass: NSArray.self, from: data) as? [NSNumber] {
-                
-                let weekdays = rawValues.compactMap { Tracker.Weekday(rawValue: $0.intValue) }
-                let shortNames = weekdays.map { $0.shortName }.joined(separator: ", ")
-                if !shortNames.isEmpty {
-                    scheduleText = shortNames
-                }
-            }
-
-            print("📌 \(title) | \(category) | \(scheduleText)")
-        }
-    }
-    
-    private func hexString(from color: UIColor) -> String {
-        var red: CGFloat = 0, green: CGFloat = 0, blue: CGFloat = 0
-        color.getRed(&red, green: &green, blue: &blue, alpha: nil)
-
-        let r = Int(red * 255)
-        let g = Int(green * 255)
-        let b = Int(blue * 255)
-
-        return String(format: "#%02X%02X%02X", r, g, b)
     }
     
     private func presentDaysSelection() {
@@ -562,7 +555,6 @@ extension NewHabitViewController: UICollectionViewDataSource, UICollectionViewDe
             selectedColorIndex = indexPath
             colorCollectionView.reloadData()
         }
-        
         updateCreateButtonState()
     }
 
@@ -679,17 +671,11 @@ extension NewHabitViewController: UITextFieldDelegate {
         let updatedText = currentText.replacingCharacters(in: rangeInText, with: string)
         
         if updatedText.count > 38 {
-            showLengthExceededAlert()
+            showError("Ограничение 38 символов")
             return false
         }
-        
+        hideError()
         return true
-    }
-    
-    private func showLengthExceededAlert() {
-        let alert = UIAlertController(title: nil, message: "Достигнут лимит ввода символов", preferredStyle: .alert)
-        alert.addAction(UIAlertAction(title: "Ок", style: .default))
-        present(alert, animated: true)
     }
     
 }

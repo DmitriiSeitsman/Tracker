@@ -159,7 +159,6 @@ final class TrackerCell: UICollectionViewCell {
             titleLabel.leadingAnchor.constraint(equalTo: topView.leadingAnchor, constant: 12),
             titleLabel.trailingAnchor.constraint(equalTo: topView.trailingAnchor, constant: -12),
             titleLabel.bottomAnchor.constraint(equalTo: topView.bottomAnchor, constant: -12),
-            titleLabel.heightAnchor.constraint(equalToConstant: 34),
 
             bottomStack.topAnchor.constraint(equalTo: verticalStack.bottomAnchor),
             bottomStack.leadingAnchor.constraint(equalTo: verticalStack.leadingAnchor),

@@ -3,7 +3,7 @@ import UIKit
 final class TabBarController: UITabBarController {
     override func viewDidLoad() {
         super.viewDidLoad()
-
+        
         let trackersVC = TrackersViewController()
         let navTrackersVC = UINavigationController(rootViewController: trackersVC)
         navTrackersVC.tabBarItem = UITabBarItem(
@@ -21,6 +21,10 @@ final class TabBarController: UITabBarController {
         )
 
         viewControllers = [navTrackersVC, navStatisticVC]
+        
+        tabBar.backgroundColor = .ypWhite
+        tabBar.isTranslucent = false
+
     }
 }
 
