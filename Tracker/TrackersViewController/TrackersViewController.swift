@@ -51,6 +51,10 @@ final class TrackersViewController: UIViewController {
     
     override func viewDidLoad() {
         super.viewDidLoad()
+        let tapGesture = UITapGestureRecognizer(target: self, action: #selector(dismissKeyboard))
+        tapGesture.cancelsTouchesInView = false
+        view.addGestureRecognizer(tapGesture)
+
         view.backgroundColor = .ypWhite
         navigationItem.leftBarButtonItem = UIBarButtonItem(customView: addTrackerButton)
         navigationItem.rightBarButtonItem = UIBarButtonItem(customView: datePicker)
@@ -88,6 +92,10 @@ final class TrackersViewController: UIViewController {
     @objc private func dateChanged(_ sender: UIDatePicker) {
         currentDate = sender.date
         reloadContent()
+    }
+    
+    @objc private func dismissKeyboard() {
+        view.endEditing(true)
     }
     
     private func reloadContent() {
@@ -151,14 +159,14 @@ final class TrackersViewController: UIViewController {
             let vc = UnscheduledViewController()
             vc.trackerToEdit = tracker
             vc.delegate = self
-            vc.modalPresentationStyle = .fullScreen
+            vc.modalPresentationStyle = .pageSheet
             present(vc, animated: true)
         } else {
             let vc = NewHabitViewController()
             vc.trackerToEdit = tracker
             vc.completedDays = completedDays
             vc.delegate = self
-            vc.modalPresentationStyle = .fullScreen
+            vc.modalPresentationStyle = .pageSheet
             present(vc, animated: true)
         }
     }
@@ -167,8 +175,11 @@ final class TrackersViewController: UIViewController {
     private func makeCategorySection(title: String, trackers: [Tracker], delegate: TrackerCellDelegate) -> UIView {
         let sectionStack = UIStackView()
         sectionStack.axis = .vertical
-        sectionStack.spacing = 12
+        sectionStack.spacing = 0
         sectionStack.translatesAutoresizingMaskIntoConstraints = false
+        
+        sectionStack.layoutMargins = UIEdgeInsets(top: 16, left: 0, bottom: 0, right: 0)
+        sectionStack.isLayoutMarginsRelativeArrangement = true
         
         let titleLabel = UILabel()
         titleLabel.text = title
@@ -177,7 +188,7 @@ final class TrackersViewController: UIViewController {
         // Layout
         let layout = UICollectionViewFlowLayout()
         layout.scrollDirection = .vertical
-        layout.minimumLineSpacing = 12
+        layout.minimumLineSpacing = 0
         layout.minimumInteritemSpacing = 7
         layout.sectionInset = .zero
         
@@ -232,6 +243,8 @@ final class TrackersViewController: UIViewController {
         
         sectionStack.addArrangedSubview(titleLabel)
         sectionStack.addArrangedSubview(collectionView)
+        sectionStack.setCustomSpacing(0, after: collectionView)
+
         
         return sectionStack
     }
@@ -266,7 +279,7 @@ final class TrackersViewController: UIViewController {
         
         // Контентный стек
         contentStack.axis = .vertical
-        contentStack.spacing = 24
+        contentStack.spacing = 0
         contentStack.translatesAutoresizingMaskIntoConstraints = false
         scrollView.addSubview(contentStack)
         
@@ -305,13 +318,13 @@ final class TrackersViewController: UIViewController {
             searchBar.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -16),
             
             // ScrollView
-            scrollView.topAnchor.constraint(equalTo: searchBar.bottomAnchor, constant: 8),
+            scrollView.topAnchor.constraint(equalTo: searchBar.bottomAnchor),
             scrollView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
             scrollView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
             scrollView.bottomAnchor.constraint(equalTo: view.bottomAnchor),
             
             // Stack внутри scrollView
-            contentStack.topAnchor.constraint(equalTo: scrollView.topAnchor, constant: 16),
+            contentStack.topAnchor.constraint(equalTo: scrollView.topAnchor),
             contentStack.leadingAnchor.constraint(equalTo: scrollView.leadingAnchor, constant: 16),
             contentStack.trailingAnchor.constraint(equalTo: scrollView.trailingAnchor, constant: -16),
             contentStack.bottomAnchor.constraint(equalTo: scrollView.bottomAnchor),

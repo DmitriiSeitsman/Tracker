@@ -169,6 +169,7 @@ final class UnscheduledViewController: UIViewController {
     
     override func viewDidLoad() {
         super.viewDidLoad()
+        checkEditMode()
         cancelButton.addTarget(self, action: #selector(cancelButtonTapped), for: .touchUpInside)
         createButton.addTarget(self, action: #selector(createButtonTapped), for: .touchUpInside)
         categoryButton.addTarget(self, action: #selector(categoryButtonTapped), for: .touchUpInside)
@@ -303,10 +304,15 @@ final class UnscheduledViewController: UIViewController {
     
     @objc private func cancelButtonTapped() {
         AnimationHelper.animateButtonPress(cancelButton) { [weak self] in
-            self?.presentingViewController?.presentingViewController?.dismiss(animated: true)
+            guard let self else { return }
+            
+            if trackerToEdit != nil {
+                self.dismiss(animated: true)
+            } else {
+                self.presentingViewController?.presentingViewController?.dismiss(animated: true)
+            }
         }
     }
-    
     @objc private func createButtonTapped() {
         AnimationHelper.animateButtonPress(createButton) { [self] in
             guard
@@ -315,28 +321,74 @@ final class UnscheduledViewController: UIViewController {
                 let selectedColorIndex,
                 let selectedCategory
             else { return }
-
-            let tracker = Tracker(
-                id: UUID(),
-                title: name,
-                color: colors[selectedColorIndex.item],
-                emoji: emojis[selectedEmojiIndex.item],
-                schedule: [],
-                categoryName: selectedCategory.name,
-                createdAt: currentDate,
-                isPinned: false
-            )
-
-            print("Сохраняем трекер в категорию:", selectedCategory.name ?? "nil")
-
-            // 👇 Передаем currentDate как createdAt
-            TrackerStore.shared.addTracker(tracker,
-                                           categoryTitle: selectedCategory.name ?? "Без категории",
-                                           createdAt: currentDate)
-
-            presentingViewController?.presentingViewController?.dismiss(animated: true)
+            
+            if let existing = trackerToEdit {
+                let updated = Tracker(
+                    id: existing.id,
+                    title: name,
+                    color: colors[selectedColorIndex.item],
+                    emoji: emojis[selectedEmojiIndex.item],
+                    schedule: [],
+                    categoryName: selectedCategory.name ?? "",
+                    createdAt: existing.createdAt,
+                    isPinned: existing.isPinned
+                )
+                
+                TrackerStore.shared.updateTracker(updated, categoryTitle: selectedCategory.name ?? "")
+                delegate?.didUpdateTracker(updated)
+            } else {
+                let newTracker = Tracker(
+                    id: UUID(),
+                    title: name,
+                    color: colors[selectedColorIndex.item],
+                    emoji: emojis[selectedEmojiIndex.item],
+                    schedule: [],
+                    categoryName: selectedCategory.name ?? "",
+                    createdAt: currentDate,
+                    isPinned: false
+                )
+                
+                TrackerStore.shared.addTracker(newTracker, categoryTitle: selectedCategory.name ?? "", createdAt: currentDate)
+            }
+            
+            if trackerToEdit != nil {
+                self.dismiss(animated: true)
+            } else {
+                self.presentingViewController?.presentingViewController?.dismiss(animated: true)
+            }
+            
         }
     }
+//    @objc private func createButtonTapped() {
+//        AnimationHelper.animateButtonPress(createButton) { [self] in
+//            guard
+//                let name = nameTextField.text,
+//                let selectedEmojiIndex,
+//                let selectedColorIndex,
+//                let selectedCategory
+//            else { return }
+//
+//            let tracker = Tracker(
+//                id: UUID(),
+//                title: name,
+//                color: colors[selectedColorIndex.item],
+//                emoji: emojis[selectedEmojiIndex.item],
+//                schedule: [],
+//                categoryName: selectedCategory.name,
+//                createdAt: currentDate,
+//                isPinned: false
+//            )
+//
+//            print("Сохраняем трекер в категорию:", selectedCategory.name ?? "nil")
+//
+//            // 👇 Передаем currentDate как createdAt
+//            TrackerStore.shared.addTracker(tracker,
+//                                           categoryTitle: selectedCategory.name ?? "Без категории",
+//                                           createdAt: currentDate)
+//
+//            presentingViewController?.presentingViewController?.dismiss(animated: true)
+//        }
+//    }
 
     
     
@@ -357,15 +409,30 @@ final class UnscheduledViewController: UIViewController {
         updateCreateButtonState()
     }
     
-    func debugPrintAllTrackers() {
-        let request: NSFetchRequest<TrackerEntity> = TrackerEntity.fetchRequest()
-        let entities = (try? CoreDataManager.shared.context.fetch(request)) ?? []
-        
-        print("=== Трекеры в базе ===")
-        for t in entities {
-            print("📌 \(t.title ?? "—") | \(t.category?.name ?? "❌ без категории") | \((t.schedule as? [NSNumber])?.map { $0.intValue } ?? [])")
-            
+    private func checkEditMode() {
+        guard let tracker = trackerToEdit else { return }
+
+        newHabitLabel.text = "Редактировать событие"
+        nameTextField.text = tracker.title
+
+        if let emojiIndex = emojis.firstIndex(of: tracker.emoji) {
+            selectedEmojiIndex = IndexPath(item: emojiIndex, section: 0)
         }
+
+        if let colorIndex = colors.firstIndex(where: { hexString(from: $0) == hexString(from: tracker.color) }) {
+            selectedColorIndex = IndexPath(item: colorIndex, section: 0)
+        }
+
+        selectedCategory = CoreDataManager.shared.context
+            .registeredObjects
+            .compactMap { $0 as? CategoryEntity }
+            .first { $0.name == tracker.categoryName }
+        updateCategoryButtonSubtitle()
+
+        createButton.setTitle("Сохранить", for: .normal)
+
+        emojiCollectionView.reloadData()
+        colorCollectionView.reloadData()
     }
     
     private static func makeListItem(title: String) -> UIButton {
@@ -426,10 +493,11 @@ extension UnscheduledViewController: UICollectionViewDataSource, UICollectionVie
     func collectionView(_ collectionView: UICollectionView, didSelectItemAt indexPath: IndexPath) {
         if collectionView == emojiCollectionView {
             selectedEmojiIndex = indexPath
-        } else {
+            emojiCollectionView.reloadData()
+        } else if collectionView == colorCollectionView {
             selectedColorIndex = indexPath
+            colorCollectionView.reloadData()
         }
-        collectionView.reloadData()
         updateCreateButtonState()
     }
 }
