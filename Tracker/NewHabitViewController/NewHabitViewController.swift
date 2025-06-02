@@ -7,6 +7,7 @@ final class NewHabitViewController: UIViewController {
     var completedDays: Int?
     var trackerToEdit: Tracker?
     weak var delegate: TrackerEditDelegate?
+    weak var creationDelegate: NewTrackerDelegate?
     
     
     // MARK: - Data Sources
@@ -86,16 +87,6 @@ final class NewHabitViewController: UIViewController {
         return view
     }()
     
-    private let newHabitLabel: UILabel = {
-        let label = UILabel()
-        label.text = "Новая привычка"
-        label.font = .YPFont(16, weight: .medium)
-        label.textAlignment = .center
-        label.translatesAutoresizingMaskIntoConstraints = false
-        label.backgroundColor = .ypWhite
-        return label
-    }()
-    
     private let errorLabel: UILabel = {
         let label = UILabel()
         label.textColor = .ypRed
@@ -107,7 +98,6 @@ final class NewHabitViewController: UIViewController {
         return label
     }()
 
-    
     private let daysCounterLabel: UILabel = {
         let label = UILabel()
         label.font = .YPFont(32, weight: .bold)
@@ -195,6 +185,14 @@ final class NewHabitViewController: UIViewController {
     
     override func viewDidLoad() {
         super.viewDidLoad()
+        
+        if navigationController != nil {
+            print("Мы внутри UINavigationController 🚀")
+        } else {
+            print("Никакого навигационного контроллера нет 😢")
+        }
+
+        configureNavigationBarTitle()
         daysCounterLabel.isHidden = true
         cancelButton.addTarget(self, action: #selector(cancelButtonTapped), for: .touchUpInside)
         createButton.addTarget(self, action: #selector(createButtonTapped), for: .touchUpInside)
@@ -262,6 +260,25 @@ final class NewHabitViewController: UIViewController {
         
         return container
     }
+
+    private func configureNavigationBarTitle() {
+        guard navigationController != nil else { return }
+
+        let titleFont = UIFont.YPFont(16, weight: .medium)
+        let appearance = UINavigationBarAppearance()
+        appearance.configureWithOpaqueBackground()
+        appearance.backgroundColor = .ypWhite
+        appearance.titleTextAttributes = [
+            .foregroundColor: UIColor.label,
+            .font: titleFont
+        ]
+        appearance.shadowColor = .clear
+
+        navigationItem.standardAppearance = appearance
+        navigationItem.scrollEdgeAppearance = appearance
+        navigationItem.compactAppearance = appearance
+        navigationItem.title = trackerToEdit == nil ? "Новая привычка" : "Редактировать привычку"
+    }
     
     private func updateCreateButtonState() {
         let isFormFilled =
@@ -278,8 +295,6 @@ final class NewHabitViewController: UIViewController {
     private func setupLayout() {
         
         [
-            newHabitLabel,
-            makeSpacer(height: 24),
             daysCounterLabel,
             makeSpacer(height: 24),
             nameTextField,
@@ -313,7 +328,7 @@ final class NewHabitViewController: UIViewController {
             buttonsContainer.leadingAnchor.constraint(equalTo: buttonsWrapperView.leadingAnchor),
             buttonsContainer.trailingAnchor.constraint(equalTo: buttonsWrapperView.trailingAnchor),
             
-            stackView.topAnchor.constraint(equalTo: contentView.topAnchor, constant: 16),
+            stackView.topAnchor.constraint(equalTo: contentView.topAnchor),
             stackView.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 16),
             stackView.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -16),
             stackView.bottomAnchor.constraint(equalTo: contentView.bottomAnchor, constant: -40),
@@ -388,11 +403,14 @@ final class NewHabitViewController: UIViewController {
             }
             
             if trackerToEdit != nil {
-                self.dismiss(animated: true)
+                self.dismiss(animated: true) {
+                    self.creationDelegate?.didCreateNewTracker()
+                }
             } else {
-                self.presentingViewController?.presentingViewController?.dismiss(animated: true)
+                self.presentingViewController?.presentingViewController?.dismiss(animated: true) {
+                    self.creationDelegate?.didCreateNewTracker()
+                }
             }
-            
         }
     }
     
@@ -440,7 +458,6 @@ final class NewHabitViewController: UIViewController {
     private func checkEditMode() {
         guard let tracker = trackerToEdit else { return }
 
-        newHabitLabel.text = "Редактировать привычку"
         nameTextField.text = tracker.title
 
         if let emojiIndex = emojis.firstIndex(of: tracker.emoji) {
@@ -475,16 +492,11 @@ final class NewHabitViewController: UIViewController {
         let vc = DaysSelectionViewController()
         vc.delegate = self
         vc.configure(with: selectedWeekdays)
-        vc.modalPresentationStyle = .fullScreen
-        
-        let transition = CATransition()
-        transition.duration = 0.3
-        transition.type = .push
-        transition.subtype = .fromRight
-        transition.timingFunction = CAMediaTimingFunction(name: .easeInEaseOut)
-        
-        view.window?.layer.add(transition, forKey: kCATransition)
-        present(vc, animated: false)
+
+        let navController = UINavigationController(rootViewController: vc)
+        navController.modalPresentationStyle = .pageSheet
+
+        present(navController, animated: true)
     }
     
     private static func makeListItem(title: String, isUp: Bool) -> UIButton {

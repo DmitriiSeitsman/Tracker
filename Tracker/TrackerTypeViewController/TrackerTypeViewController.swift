@@ -3,6 +3,8 @@ import UIKit
 final class TrackerTypeViewController: UIViewController {
     
     var currentDate: Date = Date()
+    
+    weak var creationDelegate: NewTrackerDelegate?
 
     private let titleLabel: UILabel = {
         let label = UILabel()
@@ -44,17 +46,22 @@ final class TrackerTypeViewController: UIViewController {
     
     @objc private func habitButtonTapped() {
         print("habitButtonTapped")
-        let navVC = UINavigationController(rootViewController: NewHabitViewController())
-        navVC.modalPresentationStyle = .fullScreen
+        let newHabitVC = NewHabitViewController()
+        newHabitVC.creationDelegate = creationDelegate
+        newHabitVC.currentDate = currentDate
+        let navVC = UINavigationController(rootViewController: newHabitVC)
+        navVC.modalPresentationStyle = .pageSheet
         present(navVC, animated: true)
     }
-    
+
     @objc private func irregularEventButtonTapped() {
         print("irregularEventButtonTapped")
         let unscheduledVC = UnscheduledViewController()
-        unscheduledVC.currentDate = currentDate // ← передача даты
+        unscheduledVC.currentDate = currentDate
+        unscheduledVC.creationDelegate = creationDelegate
+
         let navVC = UINavigationController(rootViewController: unscheduledVC)
-        navVC.modalPresentationStyle = .fullScreen
+        navVC.modalPresentationStyle = .pageSheet
         present(navVC, animated: true)
     }
 

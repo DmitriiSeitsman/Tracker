@@ -4,6 +4,10 @@ protocol TrackerEditDelegate: AnyObject {
     func didUpdateTracker(_ tracker: Tracker)
 }
 
+protocol NewTrackerDelegate: AnyObject {
+    func didCreateNewTracker()
+}
+
 final class TrackersViewController: UIViewController {
     
     var categories: [TrackerCategory] = []
@@ -162,14 +166,25 @@ final class TrackersViewController: UIViewController {
             vc.modalPresentationStyle = .pageSheet
             present(vc, animated: true)
         } else {
-            let vc = NewHabitViewController()
-            vc.trackerToEdit = tracker
-            vc.completedDays = completedDays
-            vc.delegate = self
-            vc.modalPresentationStyle = .pageSheet
-            present(vc, animated: true)
+            let habitVC = NewHabitViewController()
+            habitVC.trackerToEdit = tracker
+            habitVC.completedDays = completedDays
+            habitVC.delegate = self
+
+            let navController = UINavigationController(rootViewController: habitVC)
+            navController.modalPresentationStyle = .pageSheet
+
+            let appearance = UINavigationBarAppearance()
+            appearance.configureWithOpaqueBackground()
+            appearance.backgroundColor = .ypWhite
+            appearance.shadowColor = .clear
+            navController.navigationBar.standardAppearance = appearance
+            navController.navigationBar.scrollEdgeAppearance = appearance
+
+            present(navController, animated: true)
         }
     }
+
     
     
     private func makeCategorySection(title: String, trackers: [Tracker], delegate: TrackerCellDelegate) -> UIView {
@@ -255,7 +270,8 @@ final class TrackersViewController: UIViewController {
     @objc private func didTapAdd() {
         let vc = TrackerTypeViewController()
         vc.currentDate = self.currentDate
-        vc.modalPresentationStyle = .fullScreen
+        vc.creationDelegate = self
+        vc.modalPresentationStyle = .pageSheet
         present(vc, animated: true)
     }
     
@@ -392,3 +408,10 @@ extension TrackersViewController: TrackerCellDelegate {
     }
 }
 
+extension TrackersViewController: NewTrackerDelegate {
+    func didCreateNewTracker() {
+        print("🎉 Новый трекер создан! Перезагружаем категории.")
+        categories = TrackerStore.shared.fetchAllCategories()
+        reloadContent()
+    }
+}

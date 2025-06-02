@@ -24,7 +24,23 @@ final class TabBarController: UITabBarController {
         
         tabBar.backgroundColor = .ypWhite
         tabBar.isTranslucent = false
+        
+        addTabBarTopBorder()
+    }
+    
+    private func addTabBarTopBorder() {
+        let border = UIView()
+        border.translatesAutoresizingMaskIntoConstraints = false
+        border.backgroundColor = .ypGray
 
+        tabBar.addSubview(border)
+
+        NSLayoutConstraint.activate([
+            border.topAnchor.constraint(equalTo: tabBar.topAnchor),
+            border.leadingAnchor.constraint(equalTo: tabBar.leadingAnchor),
+            border.trailingAnchor.constraint(equalTo: tabBar.trailingAnchor),
+            border.heightAnchor.constraint(equalToConstant: 1 / UIScreen.main.scale) // 1pt
+        ])
     }
 }
 
