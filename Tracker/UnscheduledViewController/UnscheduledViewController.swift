@@ -6,6 +6,7 @@ final class UnscheduledViewController: UIViewController {
     var currentDate: Date = Date()
     var trackerToEdit: Tracker?
     weak var delegate: TrackerEditDelegate?
+    weak var creationDelegate: NewTrackerDelegate?
     
     // MARK: - Data Sources
     
@@ -354,43 +355,11 @@ final class UnscheduledViewController: UIViewController {
             if trackerToEdit != nil {
                 self.dismiss(animated: true)
             } else {
+                creationDelegate?.didCreateNewTracker()
                 self.presentingViewController?.presentingViewController?.dismiss(animated: true)
             }
-            
         }
     }
-//    @objc private func createButtonTapped() {
-//        AnimationHelper.animateButtonPress(createButton) { [self] in
-//            guard
-//                let name = nameTextField.text,
-//                let selectedEmojiIndex,
-//                let selectedColorIndex,
-//                let selectedCategory
-//            else { return }
-//
-//            let tracker = Tracker(
-//                id: UUID(),
-//                title: name,
-//                color: colors[selectedColorIndex.item],
-//                emoji: emojis[selectedEmojiIndex.item],
-//                schedule: [],
-//                categoryName: selectedCategory.name,
-//                createdAt: currentDate,
-//                isPinned: false
-//            )
-//
-//            print("Сохраняем трекер в категорию:", selectedCategory.name ?? "nil")
-//
-//            // 👇 Передаем currentDate как createdAt
-//            TrackerStore.shared.addTracker(tracker,
-//                                           categoryTitle: selectedCategory.name ?? "Без категории",
-//                                           createdAt: currentDate)
-//
-//            presentingViewController?.presentingViewController?.dismiss(animated: true)
-//        }
-//    }
-
-    
     
     @objc private func categoryButtonTapped() {
         AnimationHelper.animateButtonPress(categoryButton) { [weak self] in
