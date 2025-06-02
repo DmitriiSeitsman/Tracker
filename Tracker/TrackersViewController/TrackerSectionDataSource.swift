@@ -34,11 +34,19 @@ final class TrackerSectionDataSource: NSObject, UICollectionViewDataSource {
 
         let completedDays = completedTrackers.filter { $0.id == tracker.id }.count
 
-        let cell = collectionView.dequeueReusableCell(withReuseIdentifier: TrackerCell.reuseIdentifier, for: indexPath) as! TrackerCell
+        guard let cell = collectionView.dequeueReusableCell(
+            withReuseIdentifier: TrackerCell.reuseIdentifier,
+            for: indexPath
+        ) as? TrackerCell else {
+            print("Не удалось привести ячейку к TrackerCell на \(indexPath)")
+            return UICollectionViewCell()
+        }
+
         cell.configure(with: tracker, completedDays: completedDays, isCompletedToday: isCompletedToday)
         cell.toggleCompletion = toggleHandler
-        cell.delegate = delegate // ✅ устанавливаем делегат
+        cell.delegate = delegate
 
         return cell
     }
+
 }

@@ -56,13 +56,18 @@ final class TrackerRecordStore {
 
     func fetchAllRecords() -> [TrackerRecord] {
         let request: NSFetchRequest<TrackerRecordEntity> = TrackerRecordEntity.fetchRequest()
-        guard let result = try? context.fetch(request) else { return [] }
-
-        return result.compactMap {
-            guard let id = $0.id, let date = $0.date else { return nil }
-            return TrackerRecord(id: id, date: date)
+        do {
+            let result = try context.fetch(request)
+            return result.compactMap {
+                guard let id = $0.id, let date = $0.date else { return nil }
+                return TrackerRecord(id: id, date: date)
+            }
+        } catch {
+            print("Ошибка при получении записей TrackerRecord: \(error)")
+            return []
         }
     }
+
 
     func isTrackerCompleted(_ trackerID: UUID, on date: Date) -> Bool {
         let request: NSFetchRequest<TrackerRecordEntity> = TrackerRecordEntity.fetchRequest()
@@ -71,8 +76,14 @@ final class TrackerRecordStore {
             NSPredicate(format: "date == %@", date as CVarArg)
         ])
 
-        let result = try? context.fetch(request)
-        return result?.isEmpty == false
+        do {
+            let result = try context.fetch(request)
+            return !result.isEmpty
+        } catch {
+            print("Ошибка при проверке завершённости трекера \(trackerID): \(error)")
+            return false
+        }
     }
+
 }
 
