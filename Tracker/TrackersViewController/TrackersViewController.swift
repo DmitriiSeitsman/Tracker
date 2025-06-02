@@ -163,29 +163,32 @@ final class TrackersViewController: UIViewController {
             let vc = UnscheduledViewController()
             vc.trackerToEdit = tracker
             vc.delegate = self
-            vc.modalPresentationStyle = .pageSheet
-            present(vc, animated: true)
+
+            presentInSheet(vc)
         } else {
             let habitVC = NewHabitViewController()
             habitVC.trackerToEdit = tracker
             habitVC.completedDays = completedDays
             habitVC.delegate = self
 
-            let navController = UINavigationController(rootViewController: habitVC)
-            navController.modalPresentationStyle = .pageSheet
-
-            let appearance = UINavigationBarAppearance()
-            appearance.configureWithOpaqueBackground()
-            appearance.backgroundColor = .ypWhite
-            appearance.shadowColor = .clear
-            navController.navigationBar.standardAppearance = appearance
-            navController.navigationBar.scrollEdgeAppearance = appearance
-
-            present(navController, animated: true)
+            presentInSheet(habitVC)
         }
     }
 
-    
+    private func presentInSheet(_ viewController: UIViewController, animated: Bool = true) {
+        let navController = UINavigationController(rootViewController: viewController)
+        navController.modalPresentationStyle = .pageSheet
+
+        let appearance = UINavigationBarAppearance()
+        appearance.configureWithOpaqueBackground()
+        appearance.backgroundColor = .ypWhite
+        appearance.shadowColor = .clear
+
+        navController.navigationBar.standardAppearance = appearance
+        navController.navigationBar.scrollEdgeAppearance = appearance
+
+        present(navController, animated: animated)
+    }
     
     private func makeCategorySection(title: String, trackers: [Tracker], delegate: TrackerCellDelegate) -> UIView {
         let sectionStack = UIStackView()

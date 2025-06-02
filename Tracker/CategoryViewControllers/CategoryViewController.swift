@@ -230,9 +230,9 @@ extension CategoryViewController: UITableViewDataSource, UITableViewDelegate {
     
     private func confirmDeleteCategory(_ category: CategoryEntity) {
         let alert = UIAlertController(
-            title: "Удалить категорию?",
-            message: "Это действие нельзя отменить.",
-            preferredStyle: .alert
+            title: "Эта категория точно не нужна?",
+            message: nil,
+            preferredStyle: .actionSheet
         )
         
         alert.addAction(UIAlertAction(title: "Отмена", style: .cancel))
