@@ -116,6 +116,7 @@ final class TrackerCell: UICollectionViewCell {
     // MARK: - Actions
     
     @objc private func didTapActionButton() {
+        print("Action button tapped")
         guard let tracker = tracker else { return }
         toggleCompletion?(tracker, isCompletedToday)
     }
@@ -137,6 +138,8 @@ final class TrackerCell: UICollectionViewCell {
         topView.addSubview(titleLabel)
         bottomView.addSubview(countLabel)
         bottomView.addSubview(actionButton)
+        bottomView.translatesAutoresizingMaskIntoConstraints = false
+        bottomView.heightAnchor.constraint(equalToConstant: 44).isActive = true
         
         actionButton.addTarget(self, action: #selector(didTapActionButton), for: .touchUpInside)
 
