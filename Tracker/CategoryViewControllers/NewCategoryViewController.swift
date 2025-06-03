@@ -9,15 +9,6 @@ final class NewCategoryViewController: UIViewController {
 
     // MARK: - UI
 
-    private let titleLabel: UILabel = {
-        let label = UILabel()
-        label.font = .YPFont(16, weight: .medium)
-        label.textColor = .ypBlack
-        label.textAlignment = .center
-        label.translatesAutoresizingMaskIntoConstraints = false
-        return label
-    }()
-
     private let nameTextField: UITextField = {
         let textField = UITextField()
         textField.placeholder = "Введите название категории"
@@ -53,7 +44,9 @@ final class NewCategoryViewController: UIViewController {
         super.viewDidLoad()
         view.backgroundColor = .ypWhite
         navigationItem.hidesBackButton = true
+        navigationItem.title = editingCategory == nil ? "Новая категория" : "Редактирование категории"
 
+        configureNavigationBarAppearance()
         setupLayout()
         setupActions()
 
@@ -69,15 +62,11 @@ final class NewCategoryViewController: UIViewController {
     // MARK: - Setup
 
     private func setupLayout() {
-        view.addSubview(titleLabel)
         view.addSubview(nameTextField)
         view.addSubview(createButton)
 
         NSLayoutConstraint.activate([
-            titleLabel.topAnchor.constraint(equalTo: view.topAnchor, constant: 78),
-            titleLabel.centerXAnchor.constraint(equalTo: view.centerXAnchor),
-
-            nameTextField.topAnchor.constraint(equalTo: titleLabel.bottomAnchor, constant: 38),
+            nameTextField.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor, constant: 24),
             nameTextField.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 16),
             nameTextField.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -16),
 
@@ -92,14 +81,24 @@ final class NewCategoryViewController: UIViewController {
         nameTextField.addTarget(self, action: #selector(textFieldDidChange), for: .editingChanged)
         createButton.addTarget(self, action: #selector(createTapped), for: .touchUpInside)
     }
+    
+    private func configureNavigationBarAppearance() {
+        let appearance = UINavigationBarAppearance()
+        appearance.configureWithOpaqueBackground()
+        appearance.backgroundColor = .ypWhite
+        appearance.shadowColor = .clear
+        appearance.titleTextAttributes = [
+            .font: UIFont.YPFont(16, weight: .medium),
+            .foregroundColor: UIColor.ypBlack
+        ]
+        navigationController?.navigationBar.standardAppearance = appearance
+        navigationController?.navigationBar.scrollEdgeAppearance = appearance
+    }
 
     private func updateUIIfEditing() {
         if let category = editingCategory {
-            titleLabel.text = "Редактирование категории"
             nameTextField.text = category.name
             textFieldDidChange(nameTextField)
-        } else {
-            titleLabel.text = "Новая категория"
         }
     }
 

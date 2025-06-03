@@ -127,7 +127,7 @@ final class CategoryViewController: UIViewController {
         let appearance = UINavigationBarAppearance()
         appearance.configureWithOpaqueBackground()
         appearance.backgroundColor = .ypWhite
-        appearance.shadowColor = nil // Убираем разделитель
+        appearance.shadowColor = nil
         
         appearance.titleTextAttributes = [
             .font: UIFont.YPFont(16, weight: .medium),
