@@ -234,12 +234,14 @@ final class TrackersViewController: UIViewController {
         let titleContainer = UIView()
         titleContainer.translatesAutoresizingMaskIntoConstraints = false
         titleContainer.heightAnchor.constraint(greaterThanOrEqualToConstant: 30).isActive = true
+        titleContainer.backgroundColor = .clear
         
         titleContainer.addSubview(titleLabel)
         NSLayoutConstraint.activate([
             titleLabel.leadingAnchor.constraint(equalTo: titleContainer.leadingAnchor, constant: 12),
             titleLabel.trailingAnchor.constraint(equalTo: titleContainer.trailingAnchor, constant: -16),
-            titleLabel.topAnchor.constraint(equalTo: titleContainer.topAnchor),
+            titleLabel.topAnchor.constraint(equalTo: titleContainer.topAnchor, constant: 12),
+            titleContainer.bottomAnchor.constraint(equalTo: titleLabel.bottomAnchor, constant: 12)
         ])
         
         sectionStack.addArrangedSubview(titleContainer)
@@ -368,7 +370,7 @@ final class TrackersViewController: UIViewController {
             scrollView.bottomAnchor.constraint(equalTo: view.bottomAnchor),
             
             // Stack внутри scrollView
-            contentStack.topAnchor.constraint(equalTo: scrollView.topAnchor, constant: 24),
+            contentStack.topAnchor.constraint(equalTo: scrollView.topAnchor, constant: 12),
             contentStack.leadingAnchor.constraint(equalTo: scrollView.leadingAnchor, constant: 16),
             contentStack.trailingAnchor.constraint(equalTo: scrollView.trailingAnchor, constant: -16),
             contentStack.bottomAnchor.constraint(equalTo: scrollView.bottomAnchor),

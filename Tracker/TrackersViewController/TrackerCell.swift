@@ -138,8 +138,9 @@ final class TrackerCell: UICollectionViewCell {
         topView.addSubview(titleLabel)
         bottomView.addSubview(countLabel)
         bottomView.addSubview(actionButton)
+        bottomView.backgroundColor = .clear
         bottomView.translatesAutoresizingMaskIntoConstraints = false
-        bottomView.heightAnchor.constraint(equalToConstant: 44).isActive = true
+        bottomView.heightAnchor.constraint(equalToConstant: 58).isActive = true
         
         actionButton.addTarget(self, action: #selector(didTapActionButton), for: .touchUpInside)
 
