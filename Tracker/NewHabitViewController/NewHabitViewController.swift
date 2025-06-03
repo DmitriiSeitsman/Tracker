@@ -338,9 +338,14 @@ final class NewHabitViewController: UIViewController {
     
     override func viewDidLayoutSubviews() {
         super.viewDidLayoutSubviews()
-        let targetHeight = collectionView.collectionViewLayout.collectionViewContentSize.height
-        collectionViewHeightConstraint?.constant = targetHeight
+
+        collectionView.collectionViewLayout.invalidateLayout()
+        collectionView.layoutIfNeeded()
+
+        let height = collectionView.collectionViewLayout.collectionViewContentSize.height
+        collectionViewHeightConstraint?.constant = height
     }
+
     
     // MARK: - Helpers
     
