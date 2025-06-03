@@ -13,15 +13,6 @@ final class DaysSelectionViewController: UIViewController {
     
     // MARK: - UI Elements
     
-    private let titleLabel: UILabel = {
-        let label = UILabel()
-        label.text = "Расписание"
-        label.font = .YPFont(16, weight: .medium)
-        label.textColor = .ypBlack
-        label.translatesAutoresizingMaskIntoConstraints = false
-        return label
-    }()
-    
     private let doneButton: UIButton = {
         let button = UIButton(type: .system)
         button.setTitle("Готово", for: .normal)
@@ -43,7 +34,7 @@ final class DaysSelectionViewController: UIViewController {
     
     private let daysContainerView: UIView = {
         let view = UIView()
-        view.backgroundColor = .ypLightGray
+        view.backgroundColor = .ypBackgroundDay
         view.layer.cornerRadius = 16
         view.translatesAutoresizingMaskIntoConstraints = false
         return view
@@ -58,8 +49,10 @@ final class DaysSelectionViewController: UIViewController {
     
     override func viewDidLoad() {
         super.viewDidLoad()
+        title = "Расписание"
         doneButton.addTarget(self, action: #selector(doneButtonTapped), for: .touchUpInside)
         view.backgroundColor = .ypWhite
+        setupNavigationBarAppearance()
         setupLayout()
     }
     
@@ -71,17 +64,26 @@ final class DaysSelectionViewController: UIViewController {
     
     // MARK: - Private Methods
     
+    private func setupNavigationBarAppearance() {
+        let appearance = UINavigationBarAppearance()
+        appearance.configureWithOpaqueBackground()
+        appearance.backgroundColor = .ypWhite
+        appearance.titleTextAttributes = [
+            .font: UIFont.YPFont(16, weight: .medium),
+            .foregroundColor: UIColor.ypBlack
+        ]
+        appearance.shadowColor = .clear
+        navigationController?.navigationBar.standardAppearance = appearance
+        navigationController?.navigationBar.scrollEdgeAppearance = appearance
+    }
+    
     private func setupLayout() {
-        view.addSubview(titleLabel)
         view.addSubview(daysContainerView)
         view.addSubview(doneButton)
         daysContainerView.addSubview(daysStack)
         
         NSLayoutConstraint.activate([
-            titleLabel.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor, constant: 24),
-            titleLabel.centerXAnchor.constraint(equalTo: view.centerXAnchor),
-            
-            daysContainerView.topAnchor.constraint(equalTo: titleLabel.bottomAnchor, constant: 16),
+            daysContainerView.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor, constant: 24),
             daysContainerView.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 20),
             daysContainerView.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -20),
             
@@ -102,7 +104,6 @@ final class DaysSelectionViewController: UIViewController {
             
             if weekday != Tracker.Weekday.allCases.last {
                 let divider = makeDivider()
-                divider.heightAnchor.constraint(equalToConstant: 1).isActive = true
                 daysStack.addArrangedSubview(divider)
             }
         }
@@ -159,9 +160,12 @@ final class DaysSelectionViewController: UIViewController {
     // MARK: - Actions
     
     @objc private func doneButtonTapped() {
-        let selected = switchMap.compactMap { (key, toggle) in toggle.isOn ? key : nil }
-        delegate?.didSelectWeekdays(Set(selected))
-        dismiss(animated: true)
+        AnimationHelper.animateButtonPress(doneButton) { [weak self] in
+            guard let self = self else { return }
+            let selected = switchMap.compactMap { (key, toggle) in toggle.isOn ? key : nil }
+            delegate?.didSelectWeekdays(Set(selected))
+            dismiss(animated: true)
+        }
     }
     
     @objc private func daySwitchChanged(_ sender: UISwitch) {
