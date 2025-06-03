@@ -246,7 +246,6 @@ final class TrackersViewController: UIViewController {
         
         sectionStack.addArrangedSubview(titleContainer)
         
-        // Layout
         let layout = UICollectionViewFlowLayout()
         layout.scrollDirection = .vertical
         layout.minimumLineSpacing = 0
