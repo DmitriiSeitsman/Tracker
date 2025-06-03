@@ -25,6 +25,31 @@ final class TrackersViewController: UIViewController {
     private let placeholderImageView = UIImageView()
     private let placeholderLabel = UILabel()
     
+    private let headerStack: UIStackView = {
+        let titleLabel = UILabel()
+        titleLabel.text = "Трекеры"
+        titleLabel.font = .YPFont(34, weight: .bold)
+        titleLabel.textColor = .ypBlack
+        
+        let searchBar = UISearchBar()
+        searchBar.placeholder = "Поиск"
+        searchBar.searchBarStyle = .minimal
+        searchBar.translatesAutoresizingMaskIntoConstraints = false
+        searchBar.heightAnchor.constraint(equalToConstant: 36).isActive = true
+        searchBar.setContentHuggingPriority(.defaultLow, for: .horizontal)
+        searchBar.setContentCompressionResistancePriority(.defaultLow, for: .horizontal)
+        
+        let stack = UIStackView(arrangedSubviews: [titleLabel, searchBar])
+        stack.axis = .vertical
+        stack.spacing = 7
+        stack.alignment = .fill
+        stack.distribution = .fill
+        stack.backgroundColor = .clear
+        stack.translatesAutoresizingMaskIntoConstraints = false
+        
+        return stack
+    }()
+    
     private lazy var datePicker: UIDatePicker = {
         let picker = UIDatePicker()
         picker.datePickerMode = .date
@@ -55,10 +80,12 @@ final class TrackersViewController: UIViewController {
     
     override func viewDidLoad() {
         super.viewDidLoad()
+        view.addSubview(headerStack)
+        
         let tapGesture = UITapGestureRecognizer(target: self, action: #selector(dismissKeyboard))
         tapGesture.cancelsTouchesInView = false
         view.addGestureRecognizer(tapGesture)
-
+        
         view.backgroundColor = .ypWhite
         navigationItem.leftBarButtonItem = UIBarButtonItem(customView: addTrackerButton)
         navigationItem.rightBarButtonItem = UIBarButtonItem(customView: datePicker)
@@ -163,30 +190,30 @@ final class TrackersViewController: UIViewController {
             let vc = UnscheduledViewController()
             vc.trackerToEdit = tracker
             vc.delegate = self
-
+            
             presentInSheet(vc)
         } else {
             let habitVC = NewHabitViewController()
             habitVC.trackerToEdit = tracker
             habitVC.completedDays = completedDays
             habitVC.delegate = self
-
+            
             presentInSheet(habitVC)
         }
     }
-
+    
     private func presentInSheet(_ viewController: UIViewController, animated: Bool = true) {
         let navController = UINavigationController(rootViewController: viewController)
         navController.modalPresentationStyle = .pageSheet
-
+        
         let appearance = UINavigationBarAppearance()
         appearance.configureWithOpaqueBackground()
         appearance.backgroundColor = .ypWhite
         appearance.shadowColor = .clear
-
+        
         navController.navigationBar.standardAppearance = appearance
         navController.navigationBar.scrollEdgeAppearance = appearance
-
+        
         present(navController, animated: animated)
     }
     
@@ -194,14 +221,28 @@ final class TrackersViewController: UIViewController {
         let sectionStack = UIStackView()
         sectionStack.axis = .vertical
         sectionStack.spacing = 0
+        sectionStack.backgroundColor = .clear
         sectionStack.translatesAutoresizingMaskIntoConstraints = false
-        
-        sectionStack.layoutMargins = UIEdgeInsets(top: 16, left: 0, bottom: 0, right: 0)
         sectionStack.isLayoutMarginsRelativeArrangement = true
         
         let titleLabel = UILabel()
         titleLabel.text = title
-        titleLabel.font = .YPFont(17, weight: .bold)
+        titleLabel.font = .YPFont(19, weight: .bold)
+        titleLabel.textColor = .ypBlack
+        titleLabel.translatesAutoresizingMaskIntoConstraints = false
+        
+        let titleContainer = UIView()
+        titleContainer.translatesAutoresizingMaskIntoConstraints = false
+        titleContainer.heightAnchor.constraint(greaterThanOrEqualToConstant: 30).isActive = true
+        
+        titleContainer.addSubview(titleLabel)
+        NSLayoutConstraint.activate([
+            titleLabel.leadingAnchor.constraint(equalTo: titleContainer.leadingAnchor, constant: 12),
+            titleLabel.trailingAnchor.constraint(equalTo: titleContainer.trailingAnchor, constant: -16),
+            titleLabel.topAnchor.constraint(equalTo: titleContainer.topAnchor),
+        ])
+        
+        sectionStack.addArrangedSubview(titleContainer)
         
         // Layout
         let layout = UICollectionViewFlowLayout()
@@ -246,7 +287,7 @@ final class TrackersViewController: UIViewController {
                 
                 self.reloadContent()
             },
-            delegate: delegate // 👈 обязательно
+            delegate: delegate
         )
         
         sectionDataSources.append(dataSource)
@@ -259,10 +300,8 @@ final class TrackersViewController: UIViewController {
         let totalHeight = CGFloat(rows) * rowHeight - layout.minimumLineSpacing
         collectionView.heightAnchor.constraint(equalToConstant: totalHeight).isActive = true
         
-        sectionStack.addArrangedSubview(titleLabel)
         sectionStack.addArrangedSubview(collectionView)
         sectionStack.setCustomSpacing(0, after: collectionView)
-
         
         return sectionStack
     }
@@ -279,18 +318,6 @@ final class TrackersViewController: UIViewController {
     }
     
     private func setupUI() {
-        // Заголовок "Трекеры"
-        titleLabel.text = "Трекеры"
-        titleLabel.font = .YPFont(34, weight: .bold)
-        titleLabel.translatesAutoresizingMaskIntoConstraints = false
-        view.addSubview(titleLabel)
-        
-        // Поле поиска
-        searchBar.placeholder = "Поиск"
-        searchBar.searchBarStyle = .minimal
-        searchBar.translatesAutoresizingMaskIntoConstraints = false
-        searchBar.heightAnchor.constraint(equalToConstant: 36).isActive = true
-        view.addSubview(searchBar)
         
         // ScrollView
         scrollView.translatesAutoresizingMaskIntoConstraints = false
@@ -320,45 +347,44 @@ final class TrackersViewController: UIViewController {
     }
     
     private func setupConstraints() {
+        headerStack.isLayoutMarginsRelativeArrangement = true
+        headerStack.layoutMargins = UIEdgeInsets(top: 0, left: 0, bottom: 10, right: 0)
+        
         NSLayoutConstraint.activate([
-            // Кнопка фильтры
+            headerStack.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor, constant: 1),
+            headerStack.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 16),
+            headerStack.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -16),
+            
+            // Кнопка "Фильтры"
             filtersButton.heightAnchor.constraint(equalToConstant: 50),
             filtersButton.centerXAnchor.constraint(equalTo: view.centerXAnchor),
             filtersButton.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor, constant: -16),
             filtersButton.widthAnchor.constraint(greaterThanOrEqualToConstant: 120),
             
-            // Заголовок
-            titleLabel.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor, constant: 8),
-            titleLabel.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 16),
-            
-            // Поиск
-            searchBar.topAnchor.constraint(equalTo: titleLabel.bottomAnchor, constant: 7),
-            searchBar.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 16),
-            searchBar.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -16),
-            
-            // ScrollView
-            scrollView.topAnchor.constraint(equalTo: searchBar.bottomAnchor),
+            // ScrollView под header
+            scrollView.topAnchor.constraint(equalTo: headerStack.bottomAnchor),
             scrollView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
             scrollView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
             scrollView.bottomAnchor.constraint(equalTo: view.bottomAnchor),
             
             // Stack внутри scrollView
-            contentStack.topAnchor.constraint(equalTo: scrollView.topAnchor),
+            contentStack.topAnchor.constraint(equalTo: scrollView.topAnchor, constant: 24),
             contentStack.leadingAnchor.constraint(equalTo: scrollView.leadingAnchor, constant: 16),
             contentStack.trailingAnchor.constraint(equalTo: scrollView.trailingAnchor, constant: -16),
             contentStack.bottomAnchor.constraint(equalTo: scrollView.bottomAnchor),
             contentStack.widthAnchor.constraint(equalTo: scrollView.widthAnchor, constant: -32),
             
-            // Заглушка — по центру scrollView
+            // Заглушка — по центру
             placeholderImageView.centerXAnchor.constraint(equalTo: scrollView.centerXAnchor),
             placeholderImageView.centerYAnchor.constraint(equalTo: scrollView.centerYAnchor, constant: -40),
             placeholderImageView.widthAnchor.constraint(equalToConstant: 80),
             placeholderImageView.heightAnchor.constraint(equalToConstant: 80),
             
             placeholderLabel.topAnchor.constraint(equalTo: placeholderImageView.bottomAnchor, constant: 12),
-            placeholderLabel.centerXAnchor.constraint(equalTo: placeholderImageView.centerXAnchor),
+            placeholderLabel.centerXAnchor.constraint(equalTo: placeholderImageView.centerXAnchor)
         ])
     }
+    
     
 }
 
@@ -413,7 +439,7 @@ extension TrackersViewController: TrackerCellDelegate {
 
 extension TrackersViewController: NewTrackerDelegate {
     func didCreateNewTracker() {
-        print("🎉 Новый трекер создан! Перезагружаем категории.")
+        print("Новый трекер создан! Перезагружаем категории.")
         categories = TrackerStore.shared.fetchAllCategories()
         reloadContent()
     }

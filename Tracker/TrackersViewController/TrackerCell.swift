@@ -46,7 +46,7 @@ final class TrackerCell: UICollectionViewCell {
     
     private let countLabel: UILabel = {
         let label = UILabel()
-        label.font = .systemFont(ofSize: 12)
+        label.font = .YPFont(12, weight: .medium)
         label.textColor = .ypBlack
         label.translatesAutoresizingMaskIntoConstraints = false
         return label
@@ -125,27 +125,27 @@ final class TrackerCell: UICollectionViewCell {
     private func setupUI() {
         contentView.layer.cornerRadius = 16
         contentView.clipsToBounds = true
-        contentView.backgroundColor = .ypWhite
+        contentView.backgroundColor = .clear
         
         contentView.addSubview(verticalStack)
         contentView.addSubview(bottomStack)
         
         verticalStack.addArrangedSubview(topView)
+        bottomStack.addArrangedSubview(bottomView)
         topView.addSubview(emojiBackgroundView)
         emojiBackgroundView.addSubview(emojiLabel)
         topView.addSubview(titleLabel)
-
-        let spacer = UIView()
-        bottomStack.addArrangedSubview(countLabel)
-        bottomStack.addArrangedSubview(spacer)
-        bottomStack.addArrangedSubview(actionButton)
+        bottomView.addSubview(countLabel)
+        bottomView.addSubview(actionButton)
         
         actionButton.addTarget(self, action: #selector(didTapActionButton), for: .touchUpInside)
 
         NSLayoutConstraint.activate([
-            verticalStack.topAnchor.constraint(equalTo: contentView.topAnchor, constant: 12),
-            verticalStack.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 12),
-            verticalStack.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -12),
+           
+            verticalStack.topAnchor.constraint(equalTo: contentView.topAnchor),
+            verticalStack.leadingAnchor.constraint(equalTo: contentView.leadingAnchor),
+            verticalStack.trailingAnchor.constraint(equalTo: contentView.trailingAnchor),
+            verticalStack.heightAnchor.constraint(greaterThanOrEqualToConstant: 90),
 
             emojiBackgroundView.topAnchor.constraint(equalTo: topView.topAnchor, constant: 12),
             emojiBackgroundView.leadingAnchor.constraint(equalTo: topView.leadingAnchor, constant: 12),
@@ -163,9 +163,11 @@ final class TrackerCell: UICollectionViewCell {
             bottomStack.topAnchor.constraint(equalTo: verticalStack.bottomAnchor),
             bottomStack.leadingAnchor.constraint(equalTo: verticalStack.leadingAnchor),
             bottomStack.trailingAnchor.constraint(equalTo: verticalStack.trailingAnchor),
-            bottomStack.bottomAnchor.constraint(equalTo: contentView.bottomAnchor),
-            bottomStack.heightAnchor.constraint(equalToConstant: 58),
             
+            countLabel.leadingAnchor.constraint(equalTo: bottomView.leadingAnchor, constant: 12),
+            actionButton.trailingAnchor.constraint(equalTo: bottomView.trailingAnchor, constant: -12),
+            actionButton.topAnchor.constraint(equalTo: bottomView.topAnchor, constant: 8),
+            countLabel.centerYAnchor.constraint(equalTo: actionButton.centerYAnchor),
             actionButton.widthAnchor.constraint(equalToConstant: 34),
             actionButton.heightAnchor.constraint(equalToConstant: 34),
         ])
