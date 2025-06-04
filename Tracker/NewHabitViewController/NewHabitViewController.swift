@@ -13,13 +13,8 @@ final class NewHabitViewController: UIViewController {
     // MARK: - Data Sources
     
     private let emojis = [
-        "😀", "😅", "😂", "🥲", "😊", "😍", "😎", "🤩",
-        "😇", "😴", "😤", "🤯", "😡", "😭", "🙃", "🤔",
-        "🙌", "👏", "💪", "🧘‍♂️", "🚴‍♀️", "🏃‍♂️", "🧗‍♀️", "🏋️‍♂️",
-        "📚", "🧠", "✍️", "🎧", "🎵", "🎨", "🎮", "📷",
-        "🍎", "🍌", "🥦", "🍔", "🍩", "🍕", "☕️", "🧃",
-        "🛏", "🧼", "🪥", "🛁", "🌿", "📅", "💰", "❤️",
-        "📝", "⏰", "📖", "🛒", "🧹", "🎯"
+        "🙂", "😻", "🌺", "🐶", "❤️", "😱", "😇", "😡", "🥶",
+        "🤔", "🙌", "🍔", "🥦", "🏓", "🥇", "🎸", "🏝", "😪"
     ]
     
     private let colors: [UIColor] = [
@@ -62,7 +57,7 @@ final class NewHabitViewController: UIViewController {
     private lazy var nameTextField: UITextField = {
         let textField = UITextField()
         textField.placeholder = "Введите название трекера"
-        textField.backgroundColor = .ypLightGray
+        textField.backgroundColor = .ypBackgroundDay.withAlphaComponent(0.3)
         textField.layer.cornerRadius = 16
         textField.translatesAutoresizingMaskIntoConstraints = false
         textField.heightAnchor.constraint(equalToConstant: 75).isActive = true
@@ -105,7 +100,7 @@ final class NewHabitViewController: UIViewController {
     
     private let buttonsWrapperView: UIView = {
         let view = UIView()
-        view.backgroundColor = .ypLightGray
+        view.backgroundColor = .ypBackgroundDay.withAlphaComponent(0.3)
         view.layer.cornerRadius = 16
         view.translatesAutoresizingMaskIntoConstraints = false
         view.heightAnchor.constraint(equalToConstant: 151).isActive = true
@@ -510,8 +505,8 @@ final class NewHabitViewController: UIViewController {
         button.setTitle(title, for: .normal)
         button.setTitleColor(.label, for: .normal)
         button.contentHorizontalAlignment = .left
-        button.titleLabel?.font = .YPFont(16, weight: .regular)
-        button.backgroundColor = .ypLightGray
+        button.titleLabel?.font = .YPFont(17, weight: .regular)
+        button.backgroundColor = .clear
         button.layer.masksToBounds = true
         button.heightAnchor.constraint(equalToConstant: 75).isActive = true
         button.contentEdgeInsets = UIEdgeInsets(top: 0, left: 16, bottom: 0, right: 40)
@@ -663,11 +658,11 @@ extension NewHabitViewController: DaysSelectionViewControllerDelegate {
         let attributedText = NSMutableAttributedString(string: fullText)
         
         attributedText.addAttribute(.font,
-                                    value: UIFont.YPFont(16, weight: .regular),
+                                    value: UIFont.YPFont(17, weight: .regular),
                                     range: (fullText as NSString).range(of: title))
         
         attributedText.addAttribute(.font,
-                                    value: UIFont.YPFont(14, weight: .regular),
+                                    value: UIFont.YPFont(17, weight: .regular),
                                     range: (fullText as NSString).range(of: subtitle))
         
         attributedText.addAttribute(.foregroundColor,
@@ -696,11 +691,11 @@ extension NewHabitViewController: CategorySelectionDelegate {
         let attributedText = NSMutableAttributedString(string: fullText)
         
         attributedText.addAttribute(.font,
-                                    value: UIFont.YPFont(16, weight: .regular),
+                                    value: UIFont.YPFont(17, weight: .regular),
                                     range: (fullText as NSString).range(of: title))
         
         attributedText.addAttribute(.font,
-                                    value: UIFont.YPFont(14, weight: .regular),
+                                    value: UIFont.YPFont(17, weight: .regular),
                                     range: (fullText as NSString).range(of: subtitle))
         
         attributedText.addAttribute(.foregroundColor,

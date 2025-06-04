@@ -5,15 +5,15 @@ final class CategoryCell: UITableViewCell {
     
     let titleLabel: UILabel = {
         let label = UILabel()
-        label.font = .systemFont(ofSize: 17, weight: .regular)
+        label.font = .YPFont(17, weight: .regular)
         label.translatesAutoresizingMaskIntoConstraints = false
         return label
     }()
 
     override init(style: UITableViewCell.CellStyle, reuseIdentifier: String?) {
         super.init(style: style, reuseIdentifier: reuseIdentifier)
-        backgroundColor = .ypLightGray
-        contentView.backgroundColor = .ypLightGray
+        backgroundColor = .ypBackgroundDay.withAlphaComponent(0.3)
+        contentView.backgroundColor = .ypBackgroundDay.withAlphaComponent(0.3)
         selectionStyle = .none
         setupLayout()
     }
