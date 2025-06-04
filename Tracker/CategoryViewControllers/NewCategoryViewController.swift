@@ -12,10 +12,10 @@ final class NewCategoryViewController: UIViewController {
     private let nameTextField: UITextField = {
         let textField = UITextField()
         textField.placeholder = "Введите название категории"
-        textField.backgroundColor = .ypLightGray
+        textField.backgroundColor = .ypBackgroundDay.withAlphaComponent(0.3)
         textField.layer.cornerRadius = 16
         textField.textColor = .ypBlack
-        textField.font = .systemFont(ofSize: 17)
+        textField.font = .YPFont(17, weight: .regular)
         textField.translatesAutoresizingMaskIntoConstraints = false
         textField.heightAnchor.constraint(equalToConstant: 75).isActive = true
 

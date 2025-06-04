@@ -21,6 +21,7 @@ final class TrackerHeaderView: UICollectionReusableView {
 
     func configure(with title: String) {
         titleLabel.text = title
+        titleLabel.font = .YPFont(19, weight: .bold)
     }
 
     required init?(coder: NSCoder) { fatalError("init(coder:) has not been implemented") }

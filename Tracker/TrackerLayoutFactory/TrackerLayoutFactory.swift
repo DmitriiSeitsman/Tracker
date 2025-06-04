@@ -35,9 +35,10 @@ enum TrackerLayoutFactory {
         horizontalGroup.interItemSpacing = .fixed(8)
 
         let verticalGroupSize = NSCollectionLayoutSize(
-            widthDimension: .estimated(52 * 6 + 8 * 5),
+            widthDimension: .fractionalWidth(1.0),
             heightDimension: .absolute((52 * 3) + (8 * 2))
         )
+
         let verticalGroup = NSCollectionLayoutGroup.vertical(
             layoutSize: verticalGroupSize,
             subitems: [horizontalGroup, horizontalGroup, horizontalGroup]
@@ -45,9 +46,10 @@ enum TrackerLayoutFactory {
         verticalGroup.interItemSpacing = .fixed(8)
 
         let section = NSCollectionLayoutSection(group: verticalGroup)
-        section.orthogonalScrollingBehavior = .continuous
-        section.contentInsets = NSDirectionalEdgeInsets(top: 8, leading: 16, bottom: 16, trailing: 16)
+        section.orthogonalScrollingBehavior = .none
+        section.contentInsets = NSDirectionalEdgeInsets(top: 24, leading: 6, bottom: 24, trailing: 6)
         section.boundarySupplementaryItems = [makeHeaderItem()]
+
 
         return section
     }
@@ -72,7 +74,8 @@ enum TrackerLayoutFactory {
 
         let section = NSCollectionLayoutSection(group: group)
         section.interGroupSpacing = 8
-        section.contentInsets = NSDirectionalEdgeInsets(top: 8, leading: 16, bottom: 16, trailing: 16)
+        
+        section.contentInsets = NSDirectionalEdgeInsets(top: 24, leading: 6, bottom: 24, trailing: 6)
 
         section.boundarySupplementaryItems = [makeHeaderItem()]
 

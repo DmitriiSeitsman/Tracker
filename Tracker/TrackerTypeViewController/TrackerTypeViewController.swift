@@ -41,7 +41,6 @@ final class TrackerTypeViewController: UIViewController {
         setupLayout()
         habitButton.addTarget(self, action: #selector(habitButtonTapped), for: .touchUpInside)
         irregularEventButton.addTarget(self, action: #selector(irregularEventButtonTapped), for: .touchUpInside)
-
     }
     
     @objc private func habitButtonTapped() {

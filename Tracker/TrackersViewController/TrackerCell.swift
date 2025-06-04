@@ -108,9 +108,16 @@ final class TrackerCell: UICollectionViewCell {
         titleLabel.text = tracker.title
         countLabel.text = "\(completedDays) \(daysWord(for: completedDays))"
         
-        let iconName = isCompletedToday ? "checkmark" : "plus"
-        actionButton.setImage(UIImage(systemName: iconName), for: .normal)
-        actionButton.backgroundColor = tracker.color
+        let iconName = isCompletedToday ? UIImage(resource: .trackerDone) : UIImage(resource: .trackerPlus)
+        actionButton.setImage(iconName, for: .normal)
+        if isCompletedToday {
+            actionButton.tintColor = .ypWhite
+            actionButton.backgroundColor = tracker.color
+        } else {
+            actionButton.tintColor = tracker.color
+            actionButton.backgroundColor = .ypWhite
+        }
+
     }
 
     // MARK: - Actions

@@ -34,7 +34,7 @@ final class DaysSelectionViewController: UIViewController {
     
     private let daysContainerView: UIView = {
         let view = UIView()
-        view.backgroundColor = .ypBackgroundDay
+        view.backgroundColor = .ypBackgroundDay.withAlphaComponent(0.3)
         view.layer.cornerRadius = 16
         view.translatesAutoresizingMaskIntoConstraints = false
         return view

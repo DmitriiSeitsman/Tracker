@@ -11,13 +11,8 @@ final class UnscheduledViewController: UIViewController {
     // MARK: - Data Sources
     
     private let emojis = [
-        "😀", "😅", "😂", "🥲", "😊", "😍", "😎", "🤩",
-        "😇", "😴", "😤", "🤯", "😡", "😭", "🙃", "🤔",
-        "🙌", "👏", "💪", "🧘‍♂️", "🚴‍♀️", "🏃‍♂️", "🧗‍♀️", "🏋️‍♂️",
-        "📚", "🧠", "✍️", "🎧", "🎵", "🎨", "🎮", "📷",
-        "🍎", "🍌", "🥦", "🍔", "🍩", "🍕", "☕️", "🧃",
-        "🛏", "🧼", "🪥", "🛁", "🌿", "📅", "💰", "❤️",
-        "📝", "⏰", "📖", "🛒", "🧹", "🎯"
+        "🙂", "😻", "🌺", "🐶", "❤️", "😱", "😇", "😡", "🥶",
+        "🤔", "🙌", "🍔", "🥦", "🏓", "🥇", "🎸", "🏝", "😪"
     ]
     
     private let colors: [UIColor] = [
@@ -57,7 +52,7 @@ final class UnscheduledViewController: UIViewController {
     private lazy var nameTextField: UITextField = {
         let textField = UITextField()
         textField.placeholder = "Введите название трекера"
-        textField.backgroundColor = .ypLightGray
+        textField.backgroundColor = .ypBackgroundDay.withAlphaComponent(0.3)
         textField.layer.cornerRadius = 16
         textField.translatesAutoresizingMaskIntoConstraints = false
         textField.heightAnchor.constraint(equalToConstant: 75).isActive = true
@@ -100,7 +95,7 @@ final class UnscheduledViewController: UIViewController {
     
     private let buttonsWrapperView: UIView = {
         let view = UIView()
-        view.backgroundColor = .ypLightGray
+        view.backgroundColor = .ypBackgroundDay.withAlphaComponent(0.3)
         view.layer.cornerRadius = 16
         view.translatesAutoresizingMaskIntoConstraints = false
         view.heightAnchor.constraint(equalToConstant: 75).isActive = true
@@ -123,16 +118,6 @@ final class UnscheduledViewController: UIViewController {
         label.translatesAutoresizingMaskIntoConstraints = false
         return label
     }()
-    
-//    private let newHabitLabel: UILabel = {
-//        let label = UILabel()
-//        label.text = "Новое нерегулярное событие"
-//        label.font = .YPFont(16, weight: .medium)
-//        label.textAlignment = .center
-//        label.translatesAutoresizingMaskIntoConstraints = false
-//        label.backgroundColor = .ypWhite
-//        return label
-//    }()
     
     private let categoryButton = makeListItem(title: "Категория")
     
@@ -321,14 +306,18 @@ final class UnscheduledViewController: UIViewController {
     
     private func setupTapToDismissKeyboard() {
         let tapGesture = UITapGestureRecognizer(target: self, action: #selector(dismissKeyboard))
-        tapGesture.cancelsTouchesInView = false // чтобы не ломать тап по кнопкам и ячейкам
+        tapGesture.cancelsTouchesInView = false
         view.addGestureRecognizer(tapGesture)
     }
     
     override func viewDidLayoutSubviews() {
         super.viewDidLayoutSubviews()
-        let targetHeight = collectionView.collectionViewLayout.collectionViewContentSize.height
-        collectionViewHeightConstraint?.constant = targetHeight
+
+        collectionView.collectionViewLayout.invalidateLayout()
+        collectionView.layoutIfNeeded()
+
+        let height = collectionView.collectionViewLayout.collectionViewContentSize.height
+        collectionViewHeightConstraint?.constant = height
     }
     
     // MARK: - Helpers
@@ -462,8 +451,8 @@ final class UnscheduledViewController: UIViewController {
         button.setTitle(title, for: .normal)
         button.setTitleColor(.label, for: .normal)
         button.contentHorizontalAlignment = .left
-        button.titleLabel?.font = .YPFont(16, weight: .regular)
-        button.backgroundColor = .ypLightGray
+        button.titleLabel?.font = .YPFont(17, weight: .regular)
+        button.backgroundColor = .clear
         button.layer.masksToBounds = true
         button.heightAnchor.constraint(equalToConstant: 75).isActive = true
         button.contentEdgeInsets = UIEdgeInsets(top: 0, left: 16, bottom: 0, right: 40)
@@ -497,7 +486,7 @@ final class UnscheduledViewController: UIViewController {
 
 extension UnscheduledViewController: UICollectionViewDataSource {
     func numberOfSections(in collectionView: UICollectionView) -> Int {
-        return 2 // 0 — Emoji, 1 — Color
+        return 2
     }
     
     func collectionView(_ collectionView: UICollectionView, numberOfItemsInSection section: Int) -> Int {
@@ -604,11 +593,11 @@ extension UnscheduledViewController: CategorySelectionDelegate {
         let attributedText = NSMutableAttributedString(string: fullText)
         
         attributedText.addAttribute(.font,
-                                    value: UIFont.YPFont(16, weight: .regular),
+                                    value: UIFont.YPFont(17, weight: .regular),
                                     range: (fullText as NSString).range(of: title))
         
         attributedText.addAttribute(.font,
-                                    value: UIFont.YPFont(14, weight: .regular),
+                                    value: UIFont.YPFont(17, weight: .regular),
                                     range: (fullText as NSString).range(of: subtitle))
         
         attributedText.addAttribute(.foregroundColor,
