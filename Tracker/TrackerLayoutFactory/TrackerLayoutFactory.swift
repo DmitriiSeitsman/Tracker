@@ -21,10 +21,10 @@ enum TrackerLayoutFactory {
         )
         let item = NSCollectionLayoutItem(layoutSize: itemSize)
 
-        item.contentInsets = NSDirectionalEdgeInsets(top: 0, leading: 0, bottom: 0, trailing: 8)
+        item.contentInsets = NSDirectionalEdgeInsets(top: 0, leading: 0, bottom: 0, trailing: 0)
 
         let horizontalGroupSize = NSCollectionLayoutSize(
-            widthDimension: .estimated(52 * 6 + 8 * 5),
+            widthDimension: .fractionalWidth(1.0),
             heightDimension: .absolute(52)
         )
         let horizontalGroup = NSCollectionLayoutGroup.horizontal(
@@ -32,7 +32,7 @@ enum TrackerLayoutFactory {
             subitem: item,
             count: 6
         )
-        horizontalGroup.interItemSpacing = .fixed(8)
+        horizontalGroup.interItemSpacing = .fixed(5)
 
         let verticalGroupSize = NSCollectionLayoutSize(
             widthDimension: .fractionalWidth(1.0),
@@ -43,7 +43,7 @@ enum TrackerLayoutFactory {
             layoutSize: verticalGroupSize,
             subitems: [horizontalGroup, horizontalGroup, horizontalGroup]
         )
-        verticalGroup.interItemSpacing = .fixed(8)
+        verticalGroup.interItemSpacing = .fixed(0)
 
         let section = NSCollectionLayoutSection(group: verticalGroup)
         section.orthogonalScrollingBehavior = .none
@@ -70,10 +70,10 @@ enum TrackerLayoutFactory {
             subitem: item,
             count: 6
         )
-        group.interItemSpacing = .fixed(8)
+        group.interItemSpacing = .fixed(5)
 
         let section = NSCollectionLayoutSection(group: group)
-        section.interGroupSpacing = 8
+        section.interGroupSpacing = 0
         
         section.contentInsets = NSDirectionalEdgeInsets(top: 24, leading: 6, bottom: 24, trailing: 6)
 
