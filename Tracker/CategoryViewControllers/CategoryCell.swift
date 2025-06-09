@@ -13,7 +13,6 @@ final class CategoryCell: UITableViewCell {
     override init(style: UITableViewCell.CellStyle, reuseIdentifier: String?) {
         super.init(style: style, reuseIdentifier: reuseIdentifier)
         backgroundColor = .ypBackgroundDay.withAlphaComponent(0.3)
-        contentView.backgroundColor = .ypBackgroundDay.withAlphaComponent(0.3)
         selectionStyle = .none
         setupLayout()
     }

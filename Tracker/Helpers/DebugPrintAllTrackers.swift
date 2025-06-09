@@ -1,7 +1,7 @@
 import CoreData
 
 func debugPrintAllTrackers() {
-    let request: NSFetchRequest<TrackerEntity> = TrackerEntity.fetchRequest()
+    let request: NSFetchRequest<TrackerCoreData> = TrackerCoreData.fetchRequest()
     let entities = (try? CoreDataManager.shared.context.fetch(request)) ?? []
     
     print("=== Трекеры в базе ===")
