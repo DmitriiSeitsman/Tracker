@@ -31,7 +31,7 @@ final class NewHabitViewController: UIViewController {
     
     private var selectedEmojiIndex: IndexPath?
     private var selectedColorIndex: IndexPath?
-    private var selectedCategory: CategoryEntity?
+    private var selectedCategory: CategoryCoreData?
     private var selectedWeekdays: Set<Tracker.Weekday> = []
     private var collectionViewHeightConstraint: NSLayoutConstraint?
     
@@ -482,7 +482,7 @@ final class NewHabitViewController: UIViewController {
         
         selectedCategory = CoreDataManager.shared.context
             .registeredObjects
-            .compactMap { $0 as? CategoryEntity }
+            .compactMap { $0 as? CategoryCoreData }
             .first { $0.name == tracker.categoryName }
         updateCategoryButtonSubtitle()
         
@@ -677,7 +677,7 @@ extension NewHabitViewController: DaysSelectionViewControllerDelegate {
 }
 
 extension NewHabitViewController: CategorySelectionDelegate {
-    func didSelectCategory(_ category: CategoryEntity) {
+    func didSelectCategory(_ category: CategoryCoreData) {
         selectedCategory = category
         updateCategoryButtonSubtitle()
         updateCreateButtonState()
