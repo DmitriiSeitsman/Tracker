@@ -40,6 +40,7 @@ final class CoreDataManager {
             try context.save()
         } catch {
             print("❗️Ошибка при сохранении контекста: \(error)")
+            context.rollback()
         }
     }
 }
