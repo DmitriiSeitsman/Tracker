@@ -29,7 +29,7 @@ final class UnscheduledViewController: UIViewController {
     
     private var selectedEmojiIndex: IndexPath?
     private var selectedColorIndex: IndexPath?
-    private var selectedCategory: CategoryEntity?
+    private var selectedCategory: CategoryCoreData?
     private var collectionViewHeightConstraint: NSLayoutConstraint?
     
     // MARK: - UI
@@ -439,7 +439,7 @@ final class UnscheduledViewController: UIViewController {
 
         selectedCategory = CoreDataManager.shared.context
             .registeredObjects
-            .compactMap { $0 as? CategoryEntity }
+            .compactMap { $0 as? CategoryCoreData }
             .first { $0.name == tracker.categoryName }
         updateCategoryButtonSubtitle()
 
@@ -579,7 +579,7 @@ extension UnscheduledViewController: UITextFieldDelegate {
 }
 
 extension UnscheduledViewController: CategorySelectionDelegate {
-    func didSelectCategory(_ category: CategoryEntity) {
+    func didSelectCategory(_ category: CategoryCoreData) {
         selectedCategory = category
         updateCategoryButtonSubtitle()
         updateCreateButtonState()

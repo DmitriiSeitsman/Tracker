@@ -9,7 +9,7 @@ final class TrackerRecordStore {
     // MARK: - Add Record
 
     func addRecord(for id: UUID, on date: Date) {
-        let entity = TrackerRecordEntity(context: context)
+        let entity = TrackerRecordCoreData(context: context)
         entity.id = id
         entity.date = date
         
@@ -35,7 +35,7 @@ final class TrackerRecordStore {
 
         let nextDay = calendar.date(byAdding: .day, value: 1, to: startOfDay)!
 
-        let request: NSFetchRequest<TrackerRecordEntity> = TrackerRecordEntity.fetchRequest()
+        let request: NSFetchRequest<TrackerRecordCoreData> = TrackerRecordCoreData.fetchRequest()
         request.predicate = NSCompoundPredicate(andPredicateWithSubpredicates: [
             NSPredicate(format: "id == %@", id as CVarArg),
             NSPredicate(format: "date >= %@ AND date < %@", startOfDay as CVarArg, nextDay as CVarArg)
@@ -55,7 +55,7 @@ final class TrackerRecordStore {
     // MARK: - Fetch Records
 
     func fetchAllRecords() -> [TrackerRecord] {
-        let request: NSFetchRequest<TrackerRecordEntity> = TrackerRecordEntity.fetchRequest()
+        let request: NSFetchRequest<TrackerRecordCoreData> = TrackerRecordCoreData.fetchRequest()
         do {
             let result = try context.fetch(request)
             return result.compactMap {
@@ -70,7 +70,7 @@ final class TrackerRecordStore {
 
 
     func isTrackerCompleted(_ trackerID: UUID, on date: Date) -> Bool {
-        let request: NSFetchRequest<TrackerRecordEntity> = TrackerRecordEntity.fetchRequest()
+        let request: NSFetchRequest<TrackerRecordCoreData> = TrackerRecordCoreData.fetchRequest()
         request.predicate = NSCompoundPredicate(andPredicateWithSubpredicates: [
             NSPredicate(format: "id == %@", trackerID as CVarArg),
             NSPredicate(format: "date == %@", date as CVarArg)

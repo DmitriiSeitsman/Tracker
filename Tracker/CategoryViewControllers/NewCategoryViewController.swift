@@ -5,7 +5,7 @@ final class NewCategoryViewController: UIViewController {
 
     // MARK: - Properties
 
-    private var editingCategory: CategoryEntity?
+    private var editingCategory: CategoryCoreData?
 
     // MARK: - UI
 
@@ -124,7 +124,7 @@ final class NewCategoryViewController: UIViewController {
 
             if self.editingCategory == nil {
                 // Check for duplicates
-                let request: NSFetchRequest<CategoryEntity> = CategoryEntity.fetchRequest()
+                let request: NSFetchRequest<CategoryCoreData> = CategoryCoreData.fetchRequest()
                 request.predicate = NSPredicate(format: "name == %@", name)
                 let existing = (try? context.fetch(request)) ?? []
                 if !existing.isEmpty {
@@ -133,7 +133,7 @@ final class NewCategoryViewController: UIViewController {
                 }
             }
 
-            let category = self.editingCategory ?? CategoryEntity(context: context)
+            let category = self.editingCategory ?? CategoryCoreData(context: context)
             category.name = name
             category.isSelected = false
 
@@ -150,7 +150,7 @@ final class NewCategoryViewController: UIViewController {
 
     // MARK: - External Configuration
 
-    func configure(with category: CategoryEntity) {
+    func configure(with category: CategoryCoreData) {
         editingCategory = category
     }
 }
