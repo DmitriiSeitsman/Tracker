@@ -2,7 +2,7 @@ import UIKit
 import CoreData
 
 protocol CategorySelectionDelegate: AnyObject {
-    func didSelectCategory(_ category: CategoryEntity)
+    func didSelectCategory(_ category: CategoryCoreData)
 }
 
 
@@ -10,7 +10,7 @@ final class CategoryViewController: UIViewController {
     
     weak var delegate: CategorySelectionDelegate?
     
-    private var categories: [CategoryEntity] = []
+    private var categories: [CategoryCoreData] = []
     
     // MARK: - UI
     private var tableViewHeightConstraint: NSLayoutConstraint?
@@ -104,7 +104,7 @@ final class CategoryViewController: UIViewController {
     // MARK: - Helpers
     
     private func fetchCategories() {
-        let request: NSFetchRequest<CategoryEntity> = CategoryEntity.fetchRequest()
+        let request: NSFetchRequest<CategoryCoreData> = CategoryCoreData.fetchRequest()
         categories = (try? CoreDataManager.shared.context.fetch(request)) ?? []
         
         let hasCategories = !categories.isEmpty
@@ -222,13 +222,13 @@ extension CategoryViewController: UITableViewDataSource, UITableViewDelegate {
             return UIMenu(title: "", children: [edit, delete])
         }
     }
-    private func editCategory(_ category: CategoryEntity) {
+    private func editCategory(_ category: CategoryCoreData) {
         let editVC = NewCategoryViewController()
         editVC.configure(with: category)
         navigationController?.pushViewController(editVC, animated: true)
     }
     
-    private func confirmDeleteCategory(_ category: CategoryEntity) {
+    private func confirmDeleteCategory(_ category: CategoryCoreData) {
         let alert = UIAlertController(
             title: "Эта категория точно не нужна?",
             message: nil,

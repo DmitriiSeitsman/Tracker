@@ -97,6 +97,9 @@ final class TrackersViewController: UIViewController {
         categories = TrackerStore.shared.fetchAllCategories()
         view.bringSubviewToFront(filtersButton)
         
+        datePicker.date = Date()
+        dateChanged(datePicker)
+        
     }
     
     override func viewWillAppear(_ animated: Bool) {
