@@ -15,7 +15,7 @@ final class TrackerStore {
             return
         }
 
-        let entity = TrackerEntity(context: context)
+        let entity = TrackerCoreData(context: context)
         entity.id = tracker.id
         entity.title = tracker.title
         entity.emoji = tracker.emoji
@@ -84,19 +84,19 @@ final class TrackerStore {
 
     // MARK: - Fetch Trackers
 
-    func fetchAllTrackers() -> [TrackerEntity] {
-        let request: NSFetchRequest<TrackerEntity> = TrackerEntity.fetchRequest()
+    func fetchAllTrackers() -> [TrackerCoreData] {
+        let request: NSFetchRequest<TrackerCoreData> = TrackerCoreData.fetchRequest()
         return (try? context.fetch(request)) ?? []
     }
 
     // MARK: - Fetch Categories
 
     func fetchAllCategories() -> [TrackerCategory] {
-        let request: NSFetchRequest<CategoryEntity> = CategoryEntity.fetchRequest()
+        let request: NSFetchRequest<CategoryCoreData> = CategoryCoreData.fetchRequest()
         let categoryEntities = (try? context.fetch(request)) ?? []
 
         return categoryEntities.map { categoryEntity in
-            let trackers = (categoryEntity.trackers?.allObjects as? [TrackerEntity] ?? [])
+            let trackers = (categoryEntity.trackers?.allObjects as? [TrackerCoreData] ?? [])
                 .compactMap { $0.toTracker() }
 
             return TrackerCategory(title: categoryEntity.name ?? "Без имени", trackers: trackers)
@@ -105,21 +105,21 @@ final class TrackerStore {
 
     // MARK: - Helpers
     
-    func fetchTrackerEntity(by id: UUID) -> TrackerEntity? {
-        let request: NSFetchRequest<TrackerEntity> = TrackerEntity.fetchRequest()
+    func fetchTrackerEntity(by id: UUID) -> TrackerCoreData? {
+        let request: NSFetchRequest<TrackerCoreData> = TrackerCoreData.fetchRequest()
         request.predicate = NSPredicate(format: "id == %@", id as CVarArg)
         return try? context.fetch(request).first
     }
 
-    private func fetchCategoryEntity(by title: String) -> CategoryEntity? {
-        let request: NSFetchRequest<CategoryEntity> = CategoryEntity.fetchRequest()
+    private func fetchCategoryEntity(by title: String) -> CategoryCoreData? {
+        let request: NSFetchRequest<CategoryCoreData> = CategoryCoreData.fetchRequest()
         request.predicate = NSPredicate(format: "name == %@", title)
         return try? context.fetch(request).first
     }
     
 }
 
-extension TrackerEntity {
+extension TrackerCoreData {
     func toTracker() -> Tracker? {
         guard let id = self.id else {
             print("❌ TrackerEntity: id отсутствует")
