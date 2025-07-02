@@ -5,12 +5,24 @@ protocol CategorySelectionDelegate: AnyObject {
     func didSelectCategory(_ category: CategoryCoreData)
 }
 
-
 final class CategoryViewController: UIViewController {
     
     weak var delegate: CategorySelectionDelegate?
+    private var viewModel: CategoryViewModelProtocol
+    private var categories: [CategoryCoreData] {
+        viewModel.categories
+    }
     
-    private var categories: [CategoryCoreData] = []
+    init(viewModel: CategoryViewModelProtocol) {
+        self.viewModel = viewModel
+        super.init(nibName: nil, bundle: nil)
+    }
+
+    required init?(coder: NSCoder) {
+        fatalError("init(coder:) has not been implemented")
+    }
+
+
     
     // MARK: - UI
     private var tableViewHeightConstraint: NSLayoutConstraint?
@@ -36,7 +48,7 @@ final class CategoryViewController: UIViewController {
     private let descriptionLabel: UILabel = {
         let label = UILabel()
         label.text = "Привычки и события можно\nобъединить по смыслу"
-        label.font = .systemFont(ofSize: 12, weight: .medium)
+        label.font = .YPFont(12, weight: .medium)
         label.textColor = .ypBlack
         label.textAlignment = .center
         label.numberOfLines = 2
@@ -59,17 +71,34 @@ final class CategoryViewController: UIViewController {
     override func viewDidLoad() {
         super.viewDidLoad()
         view.backgroundColor = .ypWhite
+        
+        setupLayout()
+        setupBindings()
+        
         tableView.delegate = self
         tableView.dataSource = self
         tableView.register(CategoryCell.self, forCellReuseIdentifier: CategoryCell.reuseId)
         
-        setupLayout()
         addButton.addTarget(self, action: #selector(addButtonTapped), for: .touchUpInside)
     }
     
     override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
-        fetchCategories()
+        viewModel.fetchCategories()
+    }
+    
+    private func setupBindings() {
+        viewModel.bindCategories = { [weak self] _ in
+            guard let self else { return }
+            
+            let hasCategories = viewModel.hasCategories
+            tableView.isHidden = !hasCategories
+            emptyImageView.isHidden = hasCategories
+            descriptionLabel.isHidden = hasCategories
+            
+            tableViewHeightConstraint?.constant = CGFloat(categories.count) * 75
+            tableView.reloadData()
+        }
     }
     
     // MARK: - Layout
@@ -103,39 +132,18 @@ final class CategoryViewController: UIViewController {
     
     // MARK: - Helpers
     
-    private func fetchCategories() {
-        let request: NSFetchRequest<CategoryCoreData> = CategoryCoreData.fetchRequest()
-        categories = (try? CoreDataManager.shared.context.fetch(request)) ?? []
-        
-        let hasCategories = !categories.isEmpty
-        tableView.isHidden = !hasCategories
-        emptyImageView.isHidden = hasCategories
-        descriptionLabel.isHidden = hasCategories
-        
-        let rowHeight: CGFloat = 75
-        let totalHeight = CGFloat(categories.count) * rowHeight
-        tableViewHeightConstraint?.constant = totalHeight
-        
-        tableView.reloadData()
-    }
-    
     private func configureNavigationBar() {
         title = "Категория"
-        
-        guard let navBar = navigationController?.navigationBar else { return }
-        
         let appearance = UINavigationBarAppearance()
         appearance.configureWithOpaqueBackground()
         appearance.backgroundColor = .ypWhite
         appearance.shadowColor = nil
-        
         appearance.titleTextAttributes = [
             .font: UIFont.YPFont(16, weight: .medium),
             .foregroundColor: UIColor.ypBlack
         ]
-        
-        navBar.standardAppearance = appearance
-        navBar.scrollEdgeAppearance = appearance
+        navigationController?.navigationBar.standardAppearance = appearance
+        navigationController?.navigationBar.scrollEdgeAppearance = appearance
     }
     
     // MARK: - Actions
@@ -169,21 +177,20 @@ extension CategoryViewController: UITableViewDataSource, UITableViewDelegate {
     }
     
     func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
-        for (i, cat) in categories.enumerated() {
-            cat.isSelected = (i == indexPath.row)
+        viewModel.selectCategory(at: indexPath.row)
+        
+        let selectedCategory = categories[indexPath.row]
+        
+        let dismissBlock: (() -> Void) = { [weak self] in
+            guard let self else { return }
+            self.delegate?.didSelectCategory(selectedCategory)
         }
         
-        CoreDataManager.shared.saveContext()
-        tableView.reloadData()
-        
-        delegate?.didSelectCategory(categories[indexPath.row])
-        
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
-            if let nav = self.navigationController, nav.viewControllers.first == self {
-                self.dismiss(animated: true)
-            } else {
-                self.navigationController?.popViewController(animated: true)
-            }
+        if let nav = navigationController, nav.viewControllers.first == self {
+            dismiss(animated: true, completion: dismissBlock)
+        } else {
+            navigationController?.popViewController(animated: true)
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.3, execute: dismissBlock)
         }
     }
     
@@ -198,7 +205,7 @@ extension CategoryViewController: UITableViewDataSource, UITableViewDelegate {
         editAction.backgroundColor = .systemBlue
         
         let deleteAction = UIContextualAction(style: .destructive, title: "Удалить") { [weak self] _, _, done in
-            self?.confirmDeleteCategory(category)
+            self?.confirmDeleteCategory(at: indexPath.row)
             done(true)
         }
         
@@ -208,15 +215,16 @@ extension CategoryViewController: UITableViewDataSource, UITableViewDelegate {
     func tableView(_ tableView: UITableView,
                    contextMenuConfigurationForRowAt indexPath: IndexPath,
                    point: CGPoint) -> UIContextMenuConfiguration? {
-        let category = categories[indexPath.row]
         
         return UIContextMenuConfiguration(identifier: indexPath as NSIndexPath, previewProvider: nil) { _ in
-            let edit = UIAction(title: "Редактировать", image: UIImage(systemName: "pencil")) { [weak self] _ in
-                self?.editCategory(category)
+            let delete = UIAction(title: "Удалить", image: UIImage(systemName: "trash"), attributes: .destructive) { [weak self] _ in
+                self?.confirmDeleteCategory(at: indexPath.row)
             }
             
-            let delete = UIAction(title: "Удалить", image: UIImage(systemName: "trash"), attributes: .destructive) { [weak self] _ in
-                self?.confirmDeleteCategory(category)
+            let edit = UIAction(title: "Редактировать", image: UIImage(systemName: "pencil")) { [weak self] _ in
+                guard let self = self else { return }
+                let category = self.categories[indexPath.row]
+                self.editCategory(category)
             }
             
             return UIMenu(title: "", children: [edit, delete])
@@ -228,7 +236,7 @@ extension CategoryViewController: UITableViewDataSource, UITableViewDelegate {
         navigationController?.pushViewController(editVC, animated: true)
     }
     
-    private func confirmDeleteCategory(_ category: CategoryCoreData) {
+    private func confirmDeleteCategory(at index: Int) {
         let alert = UIAlertController(
             title: "Эта категория точно не нужна?",
             message: nil,
@@ -237,13 +245,11 @@ extension CategoryViewController: UITableViewDataSource, UITableViewDelegate {
         
         alert.addAction(UIAlertAction(title: "Отмена", style: .cancel))
         alert.addAction(UIAlertAction(title: "Удалить", style: .destructive) { [weak self] _ in
-            guard let self = self else { return }
-            CoreDataManager.shared.context.delete(category)
-            CoreDataManager.shared.saveContext()
-            self.fetchCategories()
+            self?.viewModel.deleteCategory(at: index)
         })
         
         present(alert, animated: true)
     }
+    
 }
 

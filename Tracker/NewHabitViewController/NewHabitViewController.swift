@@ -417,7 +417,8 @@ final class NewHabitViewController: UIViewController {
         AnimationHelper.animateButtonPress(categoryButton) { [weak self] in
             guard let self = self else { return }
             
-            let categoryVC = CategoryViewController()
+            let viewModel = CategoryViewModel()
+            let categoryVC = CategoryViewController(viewModel: viewModel)
             categoryVC.delegate = self
             
             let navController = UINavigationController(rootViewController: categoryVC)
