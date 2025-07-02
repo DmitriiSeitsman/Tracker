@@ -8,10 +8,21 @@ protocol CategorySelectionDelegate: AnyObject {
 final class CategoryViewController: UIViewController {
     
     weak var delegate: CategorySelectionDelegate?
-    private let viewModel = CategoryViewModel()
+    private var viewModel: CategoryViewModelProtocol
     private var categories: [CategoryCoreData] {
         viewModel.categories
     }
+    
+    init(viewModel: CategoryViewModelProtocol) {
+        self.viewModel = viewModel
+        super.init(nibName: nil, bundle: nil)
+    }
+
+    required init?(coder: NSCoder) {
+        fatalError("init(coder:) has not been implemented")
+    }
+
+
     
     // MARK: - UI
     private var tableViewHeightConstraint: NSLayoutConstraint?

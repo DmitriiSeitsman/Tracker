@@ -1,6 +1,16 @@
 import CoreData
 
-final class CategoryViewModel {
+protocol CategoryViewModelProtocol {
+    var categories: [CategoryCoreData] { get }
+    var hasCategories: Bool { get }
+    var bindCategories: (([CategoryCoreData]) -> Void)? { get set }
+
+    func fetchCategories()
+    func selectCategory(at index: Int)
+    func deleteCategory(at index: Int)
+}
+
+final class CategoryViewModel: CategoryViewModelProtocol {
     
     var bindCategories: (([CategoryCoreData]) -> Void)?
     var hasCategories: Bool {
