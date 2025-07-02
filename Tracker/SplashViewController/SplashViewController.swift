@@ -37,7 +37,7 @@ final class SplashViewController: UIViewController {
     }
     
     private func switchToMainApp() {
-        let hasSeenOnboarding = UserDefaults.standard.bool(forKey: "hasSeenOnboarding")
+        let hasSeenOnboarding = UserDefaultsService.shared.hasSeenOnboarding
         
         guard let window = SplashViewController.window else {
             print("❌ Не удалось получить окно")
@@ -50,7 +50,7 @@ final class SplashViewController: UIViewController {
         } else {
             let onboardingVC = OnboardingViewController()
             onboardingVC.onFinish = {
-                UserDefaults.standard.set(true, forKey: "hasSeenOnboarding")
+                UserDefaultsService.shared.hasSeenOnboarding = true
                 
                 let tabBarVC = TabBarController()
                 window.rootViewController = tabBarVC
