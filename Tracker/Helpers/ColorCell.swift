@@ -6,7 +6,7 @@ final class ColorCell: UICollectionViewCell {
     private let whiteBackgroundView: UIView = {
         let view = UIView()
         view.translatesAutoresizingMaskIntoConstraints = false
-        view.backgroundColor = .white
+        view.backgroundColor = .ypWhite
         view.layer.cornerRadius = 8
         view.layer.masksToBounds = true
         return view

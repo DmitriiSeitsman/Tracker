@@ -151,7 +151,7 @@ final class NewHabitViewController: UIViewController {
     private let createButton: UIButton = {
         let button = UIButton(type: .system)
         button.setTitle("Создать", for: .normal)
-        button.setTitleColor(.white, for: .normal)
+        button.setTitleColor(.ypWhite, for: .normal)
         button.backgroundColor = .ypBlack
         button.layer.cornerRadius = 16
         button.translatesAutoresizingMaskIntoConstraints = false
