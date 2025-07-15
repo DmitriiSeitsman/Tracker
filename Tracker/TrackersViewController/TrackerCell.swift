@@ -106,7 +106,7 @@ final class TrackerCell: UICollectionViewCell {
         verticalStack.backgroundColor = tracker.color
         emojiLabel.text = tracker.emoji
         titleLabel.text = tracker.title
-        countLabel.text = "\(completedDays) \(daysWord(for: completedDays))"
+        countLabel.text = "\(daysWord(for: completedDays))"
         
         let iconName = isCompletedToday ? UIImage(resource: .trackerDone) : UIImage(resource: .trackerPlus)
         actionButton.setImage(iconName, for: .normal)
@@ -198,16 +198,31 @@ final class TrackerCell: UICollectionViewCell {
 extension TrackerCell: UIContextMenuInteractionDelegate {
     func contextMenuInteraction(_ interaction: UIContextMenuInteraction, configurationForMenuAtLocation location: CGPoint) -> UIContextMenuConfiguration? {
         return UIContextMenuConfiguration(identifier: nil, previewProvider: nil) { _ in
-            let pin = UIAction(title: self.isPinned ? "Открепить" : "Закрепить", image: UIImage(systemName: "pin")) { _ in
+            let pinTitle = self.isPinned
+                ? NSLocalizedString("menu_unpin", comment: "")
+                : NSLocalizedString("menu_pin", comment: "")
+            
+            let pin = UIAction(title: pinTitle, image: UIImage(systemName: "pin")) { _ in
                 self.delegate?.didTogglePin(for: self.tracker)
             }
-            let edit = UIAction(title: "Редактировать", image: UIImage(systemName: "pencil")) { _ in
+            
+            let edit = UIAction(
+                title: NSLocalizedString("menu_edit", comment: ""),
+                image: UIImage(systemName: "pencil")
+            ) { _ in
                 self.delegate?.didRequestEdit(for: self.tracker)
             }
-            let delete = UIAction(title: "Удалить", image: UIImage(systemName: "trash"), attributes: .destructive) { _ in
+            
+            let delete = UIAction(
+                title: NSLocalizedString("menu_delete", comment: ""),
+                image: UIImage(systemName: "trash"),
+                attributes: .destructive
+            ) { _ in
                 self.delegate?.didRequestDelete(for: self.tracker)
             }
+            
             return UIMenu(title: "", children: [pin, edit, delete])
         }
     }
 }
+

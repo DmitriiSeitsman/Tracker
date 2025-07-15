@@ -22,7 +22,7 @@ final class StatisticViewController: UIViewController {
     }
     
     private func setupTitleLabel() {
-        titleLabel.text = "Статистика"
+        titleLabel.text = NSLocalizedString("statistics_title", comment: "Statistics screen title")
         titleLabel.font = .YPFont(34, weight: .bold)
         titleLabel.textColor = .ypBlack
         titleLabel.translatesAutoresizingMaskIntoConstraints = false
@@ -40,7 +40,7 @@ final class StatisticViewController: UIViewController {
         placeholderImage.image = UIImage(resource: .statStub)
         placeholderImage.translatesAutoresizingMaskIntoConstraints = false
         
-        placeholderLabel.text = "Анализировать пока нечего"
+        placeholderLabel.text = NSLocalizedString("statistics_placeholder", comment: "Empty state message")
         placeholderLabel.font = .YPFont(12, weight: .medium)
         placeholderLabel.textColor = .ypBlack
         placeholderLabel.textAlignment = .center
@@ -81,10 +81,10 @@ final class StatisticViewController: UIViewController {
         )
 
         let stats = [
-            (value: bestStreak, title: "Лучший период"),
-            (value: perfectDays, title: "Идеальные дни"),
-            (value: totalCompleted, title: "Трекеров завершено"),
-            (value: averagePerDay, title: "Среднее значение")
+            (value: bestStreak, title: NSLocalizedString("statistics_best_streak", comment: "")),
+            (value: perfectDays, title: NSLocalizedString("statistics_perfect_days", comment: "")),
+            (value: totalCompleted, title: NSLocalizedString("statistics_total_completed", comment: "")),
+            (value: averagePerDay, title: NSLocalizedString("statistics_average", comment: ""))
         ]
         
         let hasData = stats.contains { $0.value > 0 }

@@ -44,6 +44,11 @@
 			path = Fonts;
 			sourceTree = "<group>";
 		};
+		B8D70C462E26CB1B00FC2C58 /* Resources */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = Resources;
+			sourceTree = "<group>";
+		};
 /* End PBXFileSystemSynchronizedRootGroup section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -65,6 +70,7 @@
 				B8A754CB2DDE01D400469EF4 /* Extensions */,
 				B8A754CF2DDE06B500469EF4 /* Fonts */,
 				B8A753022DDA70A600469EF4 /* Products */,
+				B8D70C462E26CB1B00FC2C58 /* Resources */,
 				B8A753032DDA70A600469EF4 /* Tracker */,
 			);
 			sourceTree = "<group>";
@@ -96,6 +102,7 @@
 				B8A753032DDA70A600469EF4 /* Tracker */,
 				B8A754CB2DDE01D400469EF4 /* Extensions */,
 				B8A754CF2DDE06B500469EF4 /* Fonts */,
+				B8D70C462E26CB1B00FC2C58 /* Resources */,
 			);
 			name = Tracker;
 			packageProductDependencies = (
@@ -127,6 +134,7 @@
 			knownRegions = (
 				en,
 				Base,
+				ru,
 			);
 			mainGroup = B8A752F82DDA70A600469EF4;
 			minimizedProjectReferenceProxies = 1;
@@ -233,6 +241,7 @@
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
 				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
+				CLANG_ANALYZER_LOCALIZABILITY_NONLOCALIZED = YES;
 				CLANG_ANALYZER_NONNULL = YES;
 				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
 				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
@@ -296,6 +305,7 @@
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
 				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
+				CLANG_ANALYZER_LOCALIZABILITY_NONLOCALIZED = YES;
 				CLANG_ANALYZER_NONNULL = YES;
 				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
 				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";

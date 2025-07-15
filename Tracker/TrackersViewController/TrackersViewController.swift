@@ -29,11 +29,11 @@ final class TrackersViewController: UIViewController {
     private let placeholderLabel = UILabel()
     
     private lazy var headerStack: UIStackView = {
-        titleLabel.text = "Трекеры"
+        titleLabel.text = NSLocalizedString("trackers_title", comment: "")
         titleLabel.font = .YPFont(34, weight: .bold)
         titleLabel.textColor = .ypBlack
         
-        searchBar.placeholder = "Поиск"
+        searchBar.placeholder = NSLocalizedString("search_placeholder", comment: "")
         searchBar.searchBarStyle = .minimal
         searchBar.translatesAutoresizingMaskIntoConstraints = false
         searchBar.heightAnchor.constraint(equalToConstant: 36).isActive = true
@@ -69,7 +69,7 @@ final class TrackersViewController: UIViewController {
     
     private let filtersButton: UIButton = {
         let button = UIButton(type: .system)
-        button.setTitle("Фильтры", for: .normal)
+        button.setTitle(NSLocalizedString("filters_button_title", comment: ""), for: .normal)
         button.setTitleColor(.white, for: .normal)
         button.titleLabel?.font = .systemFont(ofSize: 17, weight: .medium)
         button.backgroundColor = .ypBlue
@@ -195,8 +195,8 @@ final class TrackersViewController: UIViewController {
         if filtered.isEmpty {
             placeholderImageView.isHidden = false
             placeholderLabel.text = searchText.isEmpty
-            ? "Что будем отслеживать?"
-            : "Ничего не найдено"
+            ? NSLocalizedString("empty_placeholder", comment: "")
+            : NSLocalizedString("nothing_found", comment: "")
             placeholderLabel.isHidden = false
         } else {
             placeholderImageView.isHidden = true
