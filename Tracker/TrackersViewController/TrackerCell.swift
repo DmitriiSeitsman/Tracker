@@ -124,6 +124,7 @@ final class TrackerCell: UICollectionViewCell {
     
     @objc private func didTapActionButton() {
         print("Action button tapped")
+        AnalyticsEvent.log(event: .click, screen: .main, item: .track)
         guard let tracker = tracker else { return }
         toggleCompletion?(tracker, isCompletedToday)
     }

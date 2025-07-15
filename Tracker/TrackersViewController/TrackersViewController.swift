@@ -122,7 +122,18 @@ final class TrackersViewController: UIViewController {
         }
     }
     
+    override func viewDidAppear(_ animated: Bool) {
+        super.viewDidAppear(animated)
+        AnalyticsEvent.log(event: .open, screen: .main)
+    }
+
+    override func viewDidDisappear(_ animated: Bool) {
+        super.viewDidDisappear(animated)
+        AnalyticsEvent.log(event: .close, screen: .main)
+    }
+    
     @objc private func didTapFilters() {
+        AnalyticsEvent.log(event: .click, screen: .main, item: .filter)
         let filterVC = FilterViewController()
         filterVC.delegate = self
         filterVC.selectedFilter = currentFilter
@@ -333,6 +344,7 @@ final class TrackersViewController: UIViewController {
     
     
     @objc private func didTapAdd() {
+        AnalyticsEvent.log(event: .click, screen: .main, item: .addTrack)
         let vc = TrackerTypeViewController()
         vc.currentDate = self.currentDate
         vc.creationDelegate = self
@@ -441,12 +453,14 @@ extension TrackersViewController: TrackerCellDelegate {
     
     func didRequestEdit(for tracker: Tracker?) {
         guard let tracker = tracker else { return }
+        AnalyticsEvent.log(event: .click, screen: .main, item: .edit)
         let completedDays = completedTrackers.filter { $0.id == tracker.id }.count
         presentEdit(for: tracker, completedDays: completedDays)
     }
     
     func didRequestDelete(for tracker: Tracker?) {
         guard let tracker = tracker else { return }
+        AnalyticsEvent.log(event: .click, screen: .main, item: .delete)
         let alert = UIAlertController(title: "Удалить трекер", message: "Вы уверены, что хотите удалить этот трекер?", preferredStyle: .actionSheet)
         
         alert.addAction(UIAlertAction(title: "Удалить", style: .destructive, handler: { _ in
