@@ -1,4 +1,5 @@
 import UIKit
+import Combine
 
 protocol TrackerEditDelegate: AnyObject {
     func didUpdateTracker(_ tracker: Tracker)
@@ -13,9 +14,11 @@ final class TrackersViewController: UIViewController {
     var categories: [TrackerCategory] = []
     var currentDate: Date = Date()
     
+    @Published private var searchText: String = ""
     private var sectionDataSources: [UICollectionViewDataSource] = []
     private var completedTrackers: [TrackerRecord] = []
     private var currentFilter: FilterType = .all
+    private var cancellables = Set<AnyCancellable>()
     
     private let scrollView = UIScrollView()
     private let contentStack = UIStackView()
@@ -25,13 +28,11 @@ final class TrackersViewController: UIViewController {
     private let placeholderImageView = UIImageView()
     private let placeholderLabel = UILabel()
     
-    private let headerStack: UIStackView = {
-        let titleLabel = UILabel()
+    private lazy var headerStack: UIStackView = {
         titleLabel.text = "Трекеры"
         titleLabel.font = .YPFont(34, weight: .bold)
         titleLabel.textColor = .ypBlack
         
-        let searchBar = UISearchBar()
         searchBar.placeholder = "Поиск"
         searchBar.searchBarStyle = .minimal
         searchBar.translatesAutoresizingMaskIntoConstraints = false
@@ -46,7 +47,6 @@ final class TrackersViewController: UIViewController {
         stack.distribution = .fill
         stack.backgroundColor = .clear
         stack.translatesAutoresizingMaskIntoConstraints = false
-        
         return stack
     }()
     
@@ -99,7 +99,14 @@ final class TrackersViewController: UIViewController {
         
         datePicker.date = Date()
         dateChanged(datePicker)
-        
+        $searchText
+            .removeDuplicates()
+            .debounce(for: .milliseconds(200), scheduler: RunLoop.main)
+            .sink { [weak self] _ in
+                self?.reloadContent()
+            }
+            .store(in: &cancellables)
+        searchBar.delegate = self
     }
     
     override func viewWillAppear(_ animated: Bool) {
@@ -155,24 +162,35 @@ final class TrackersViewController: UIViewController {
                     $0.id == tracker.id && calendar.isDate($0.date, inSameDayAs: selectedDay)
                 }
                 
+                let matchesSearch = searchText.isEmpty || tracker.title.lowercased().contains(searchText)
+                
                 switch currentFilter {
                 case .all:
-                    return matchesDate
+                    return matchesDate && matchesSearch
                 case .today:
-                    return matchesDate && calendar.isDateInToday(currentDate)
+                    return matchesDate && calendar.isDateInToday(currentDate) && matchesSearch
                 case .completed:
-                    return matchesDate && isCompleted
+                    return matchesDate && isCompleted && matchesSearch
                 case .notCompleted:
-                    return matchesDate && !isCompleted
+                    return matchesDate && !isCompleted && matchesSearch
                 }
             }
+            
             
             return TrackerCategory(title: category.title, trackers: filteredTrackers)
         }
             .filter { !$0.trackers.isEmpty }
         
-        placeholderImageView.isHidden = !filtered.isEmpty
-        placeholderLabel.isHidden = !filtered.isEmpty
+        if filtered.isEmpty {
+            placeholderImageView.isHidden = false
+            placeholderLabel.text = searchText.isEmpty
+            ? "Что будем отслеживать?"
+            : "Ничего не найдено"
+            placeholderLabel.isHidden = false
+        } else {
+            placeholderImageView.isHidden = true
+            placeholderLabel.isHidden = true
+        }
         
         for category in filtered {
             let sectionView = makeCategorySection(
@@ -449,3 +467,20 @@ extension TrackersViewController: NewTrackerDelegate {
         reloadContent()
     }
 }
+extension TrackersViewController: UISearchBarDelegate {
+    func searchBar(_ searchBar: UISearchBar, textDidChange text: String) {
+        searchText = text.lowercased()
+    }
+    
+    func searchBarTextDidBeginEditing(_ searchBar: UISearchBar) {
+        searchBar.setShowsCancelButton(true, animated: true)
+    }
+    
+    func searchBarCancelButtonClicked(_ searchBar: UISearchBar) {
+        searchBar.setShowsCancelButton(false, animated: true)
+        searchBar.text = ""
+        searchText = ""
+        view.endEditing(true)
+    }
+}
+
