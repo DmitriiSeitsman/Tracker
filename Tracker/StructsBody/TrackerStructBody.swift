@@ -27,4 +27,10 @@ extension Tracker.Weekday {
         case .sunday: return "Вс"
         }
     }
+    static func from(date: Date) -> Tracker.Weekday? {
+        let calendar = Calendar.current
+        let weekdayNumber = calendar.component(.weekday, from: date) // 1 (вс) ... 7 (сб)
+        let adjusted = (weekdayNumber + 5) % 7 + 1 // 1 (пн) ... 7 (вс)
+        return Tracker.Weekday(rawValue: adjusted)
+    }
 }

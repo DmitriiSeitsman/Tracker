@@ -87,3 +87,17 @@ final class TrackerRecordStore {
 
 }
 
+extension TrackerRecordStore {
+    func groupRecordsByDate() -> [Date: [TrackerRecord]] {
+        let records = fetchAllRecords()
+        var result: [Date: [TrackerRecord]] = [:]
+        let calendar = Calendar.current
+        
+        for record in records {
+            let normalizedDate = calendar.startOfDay(for: record.date)
+            result[normalizedDate, default: []].append(record)
+        }
+
+        return result
+    }
+}
