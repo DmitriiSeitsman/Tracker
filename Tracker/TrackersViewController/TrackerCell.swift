@@ -16,6 +16,7 @@ final class TrackerCell: UICollectionViewCell {
     // MARK: - Data
     private var tracker: Tracker?
     private var isCompletedToday: Bool = false
+    private var contextMenuInteraction: UIContextMenuInteraction?
     var toggleCompletion: ((_ tracker: Tracker, _ currentlyCompleted: Bool) -> Void)?
     var isPinned: Bool = false
 
@@ -33,6 +34,21 @@ final class TrackerCell: UICollectionViewCell {
         let label = UILabel()
         label.translatesAutoresizingMaskIntoConstraints = false
         return label
+    }()
+    
+    private let pinBackgroundView: UIView = {
+        let view = UIView()
+        view.backgroundColor = .clear
+        view.translatesAutoresizingMaskIntoConstraints = false
+        return view
+    }()
+    
+    private let pinImageView: UIImageView = {
+        let imageView = UIImageView()
+        imageView.image = UIImage(resource: .pinSquare)
+        imageView.translatesAutoresizingMaskIntoConstraints = false
+        imageView.isHidden = true
+        return imageView
     }()
     
     private let titleLabel: UILabel = {
@@ -101,7 +117,15 @@ final class TrackerCell: UICollectionViewCell {
     func configure(with tracker: Tracker, completedDays: Int, isCompletedToday: Bool, isPinned: Bool = false) {
         self.tracker = tracker
         self.isCompletedToday = isCompletedToday
-        self.isPinned = isPinned
+        self.isPinned = tracker.isPinned
+
+        if let oldInteraction = contextMenuInteraction {
+            self.removeInteraction(oldInteraction)
+        }
+
+        let newInteraction = UIContextMenuInteraction(delegate: self)
+        self.addInteraction(newInteraction)
+        contextMenuInteraction = newInteraction
 
         verticalStack.backgroundColor = tracker.color
         emojiLabel.text = tracker.emoji
@@ -117,7 +141,7 @@ final class TrackerCell: UICollectionViewCell {
             actionButton.tintColor = tracker.color
             actionButton.backgroundColor = .ypWhite
         }
-
+        pinImageView.isHidden = !tracker.isPinned
     }
 
     // MARK: - Actions
@@ -142,6 +166,8 @@ final class TrackerCell: UICollectionViewCell {
         verticalStack.addArrangedSubview(topView)
         bottomStack.addArrangedSubview(bottomView)
         topView.addSubview(emojiBackgroundView)
+        topView.addSubview(pinBackgroundView)
+        pinBackgroundView.addSubview(pinImageView)
         emojiBackgroundView.addSubview(emojiLabel)
         topView.addSubview(titleLabel)
         bottomView.addSubview(countLabel)
@@ -166,6 +192,14 @@ final class TrackerCell: UICollectionViewCell {
             
             emojiLabel.centerXAnchor.constraint(equalTo: emojiBackgroundView.centerXAnchor),
             emojiLabel.centerYAnchor.constraint(equalTo: emojiBackgroundView.centerYAnchor),
+            
+            pinBackgroundView.topAnchor.constraint(equalTo: topView.topAnchor, constant: 12),
+            pinBackgroundView.trailingAnchor.constraint(equalTo: topView.trailingAnchor, constant: -4),
+            pinBackgroundView.widthAnchor.constraint(equalToConstant: 24),
+            pinBackgroundView.heightAnchor.constraint(equalToConstant: 24),
+            
+            pinImageView.centerXAnchor.constraint(equalTo: pinBackgroundView.centerXAnchor),
+            pinImageView.centerYAnchor.constraint(equalTo: pinBackgroundView.centerYAnchor),
             
             titleLabel.topAnchor.constraint(equalTo: emojiBackgroundView.bottomAnchor, constant: 8),
             titleLabel.leadingAnchor.constraint(equalTo: topView.leadingAnchor, constant: 12),
@@ -197,22 +231,24 @@ final class TrackerCell: UICollectionViewCell {
 
 extension TrackerCell: UIContextMenuInteractionDelegate {
     func contextMenuInteraction(_ interaction: UIContextMenuInteraction, configurationForMenuAtLocation location: CGPoint) -> UIContextMenuConfiguration? {
-        return UIContextMenuConfiguration(identifier: nil, previewProvider: nil) { _ in
+        let identifier = NSString(string: self.isPinned ? "pinned" : "unpinned")
+        return UIContextMenuConfiguration(identifier: identifier, previewProvider: nil) { _ in
+            
             let pinTitle = self.isPinned
                 ? NSLocalizedString("menu_unpin", comment: "")
                 : NSLocalizedString("menu_pin", comment: "")
-            
+
             let pin = UIAction(title: pinTitle, image: UIImage(systemName: "pin")) { _ in
                 self.delegate?.didTogglePin(for: self.tracker)
             }
-            
+
             let edit = UIAction(
                 title: NSLocalizedString("menu_edit", comment: ""),
                 image: UIImage(systemName: "pencil")
             ) { _ in
                 self.delegate?.didRequestEdit(for: self.tracker)
             }
-            
+
             let delete = UIAction(
                 title: NSLocalizedString("menu_delete", comment: ""),
                 image: UIImage(systemName: "trash"),
@@ -220,9 +256,10 @@ extension TrackerCell: UIContextMenuInteractionDelegate {
             ) { _ in
                 self.delegate?.didRequestDelete(for: self.tracker)
             }
-            
+
             return UIMenu(title: "", children: [pin, edit, delete])
         }
     }
 }
+
 

@@ -126,7 +126,7 @@ final class TrackersViewController: UIViewController {
         super.viewDidAppear(animated)
         AnalyticsEvent.log(event: .open, screen: .main)
     }
-
+    
     override func viewDidDisappear(_ animated: Bool) {
         super.viewDidDisappear(animated)
         AnalyticsEvent.log(event: .close, screen: .main)
@@ -159,12 +159,55 @@ final class TrackersViewController: UIViewController {
         let adjustedWeekday = (systemWeekday + 5) % 7 + 1
         
         guard let selectedWeekday = Tracker.Weekday(rawValue: adjustedWeekday) else { return }
+        
         completedTrackers = TrackerRecordStore.shared.fetchAllRecords()
         
-        let filtered = categories.map { category in
-            let filteredTrackers = category.trackers.filter { tracker in
+        // Загружаем все трекеры из всех категорий
+        let allTrackers = categories.flatMap { $0.trackers }
+        
+        // MARK: Закрепленные трекеры
+        let pinnedTrackers = allTrackers
+            .filter { $0.isPinned }
+            .filter { tracker in
                 let createdDay = calendar.startOfDay(for: tracker.createdAt)
                 
+                let matchesDate: Bool = tracker.schedule.isEmpty
+                ? createdDay == selectedDay
+                : tracker.schedule.contains(selectedWeekday)
+                
+                let matchesSearch = searchText.isEmpty || tracker.title.lowercased().contains(searchText)
+                
+                let isCompleted = completedTrackers.contains {
+                    $0.id == tracker.id && calendar.isDate($0.date, inSameDayAs: selectedDay)
+                }
+                
+                switch currentFilter {
+                case .all:
+                    return matchesDate && matchesSearch
+                case .today:
+                    return matchesDate && calendar.isDateInToday(currentDate) && matchesSearch
+                case .completed:
+                    return matchesDate && isCompleted && matchesSearch
+                case .notCompleted:
+                    return matchesDate && !isCompleted && matchesSearch
+                }
+            }
+        
+        if !pinnedTrackers.isEmpty {
+            let pinnedSection = makeCategorySection(
+                title: NSLocalizedString("pinned_category_title", comment: ""),
+                trackers: pinnedTrackers,
+                delegate: self
+            )
+            contentStack.addArrangedSubview(pinnedSection)
+        }
+        
+        // MARK: Обычные категории (без закрепленных)
+        let filteredCategories = categories.compactMap { category -> TrackerCategory? in
+            let filteredTrackers = category.trackers.filter { tracker in
+                guard !tracker.isPinned else { return false } // исключаем закреплённые
+                
+                let createdDay = calendar.startOfDay(for: tracker.createdAt)
                 let matchesDate: Bool = tracker.schedule.isEmpty
                 ? createdDay == selectedDay
                 : tracker.schedule.contains(selectedWeekday)
@@ -187,12 +230,11 @@ final class TrackersViewController: UIViewController {
                 }
             }
             
-            
-            return TrackerCategory(title: category.title, trackers: filteredTrackers)
+            return filteredTrackers.isEmpty ? nil : TrackerCategory(title: category.title, trackers: filteredTrackers)
         }
-            .filter { !$0.trackers.isEmpty }
         
-        if filtered.isEmpty {
+        // MARK: Плейсхолдер
+        if pinnedTrackers.isEmpty && filteredCategories.isEmpty {
             placeholderImageView.isHidden = false
             placeholderLabel.text = searchText.isEmpty
             ? NSLocalizedString("empty_placeholder", comment: "")
@@ -203,16 +245,17 @@ final class TrackersViewController: UIViewController {
             placeholderLabel.isHidden = true
         }
         
-        for category in filtered {
+        // MARK: Добавляем секции на экран
+        for category in filteredCategories {
             let sectionView = makeCategorySection(
                 title: category.title,
                 trackers: category.trackers,
                 delegate: self
             )
-            
             contentStack.addArrangedSubview(sectionView)
         }
-        updateFiltersButtonVisibility(with: filtered)
+        
+        updateFiltersButtonVisibility(with: filteredCategories)
     }
     
     private func presentEdit(for tracker: Tracker, completedDays: Int) {
@@ -340,9 +383,6 @@ final class TrackersViewController: UIViewController {
         return sectionStack
     }
     
-    
-    
-    
     @objc private func didTapAdd() {
         AnalyticsEvent.log(event: .click, screen: .main, item: .addTrack)
         let vc = TrackerTypeViewController()
@@ -400,7 +440,7 @@ final class TrackersViewController: UIViewController {
             scrollView.topAnchor.constraint(equalTo: headerStack.bottomAnchor),
             scrollView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
             scrollView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
-            scrollView.bottomAnchor.constraint(equalTo: view.bottomAnchor),
+            scrollView.bottomAnchor.constraint(equalTo: filtersButton.topAnchor),
             
             // Stack внутри scrollView
             contentStack.topAnchor.constraint(equalTo: scrollView.topAnchor, constant: 12),
@@ -419,7 +459,6 @@ final class TrackersViewController: UIViewController {
             placeholderLabel.centerXAnchor.constraint(equalTo: placeholderImageView.centerXAnchor)
         ])
     }
-    
     
 }
 
