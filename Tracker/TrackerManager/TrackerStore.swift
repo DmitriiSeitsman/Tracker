@@ -88,6 +88,11 @@ final class TrackerStore {
         let request: NSFetchRequest<TrackerCoreData> = TrackerCoreData.fetchRequest()
         return (try? context.fetch(request)) ?? []
     }
+    
+    func fetchAllTrackersAsModels() -> [Tracker] {
+        return fetchAllTrackers().compactMap { $0.toTracker() }
+    }
+
 
     // MARK: - Fetch Categories
 

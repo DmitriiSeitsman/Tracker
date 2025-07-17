@@ -8,7 +8,7 @@ final class TrackerTypeViewController: UIViewController {
 
     private let titleLabel: UILabel = {
         let label = UILabel()
-        label.text = "Создание трекера"
+        label.text = NSLocalizedString("tracker_type_title", comment: "Title for tracker type screen")
         label.font = .YPFont(16, weight: .medium)
         label.textAlignment = .center
         label.textColor = .ypBlack
@@ -17,8 +17,8 @@ final class TrackerTypeViewController: UIViewController {
 
     private let habitButton: UIButton = {
         let button = UIButton(type: .system)
-        button.setTitle("Привычка", for: .normal)
-        button.setTitleColor(.white, for: .normal)
+        button.setTitle(NSLocalizedString("tracker_type_habit", comment: "Button title for habit"), for: .normal)
+        button.setTitleColor(.ypWhite, for: .normal)
         button.backgroundColor = .ypBlack
         button.titleLabel?.font = .YPFont(16, weight: .medium)
         button.layer.cornerRadius = 16
@@ -27,8 +27,8 @@ final class TrackerTypeViewController: UIViewController {
 
     private let irregularEventButton: UIButton = {
         let button = UIButton(type: .system)
-        button.setTitle("Нерегулярное событие", for: .normal)
-        button.setTitleColor(.white, for: .normal)
+        button.setTitle(NSLocalizedString("tracker_type_irregular_event", comment: "Button title for irregular event"), for: .normal)
+        button.setTitleColor(.ypWhite, for: .normal)
         button.backgroundColor = .ypBlack
         button.titleLabel?.font = .YPFont(16, weight: .medium)
         button.layer.cornerRadius = 16
